@@ -60,6 +60,8 @@ def scrubTitle(inlist):
         if (unacceptableCharacters.find(str(t1[j]))!=-1):
             t1.insert(j+1,"%" + str(ord(t1[j])))
             t1.pop(j)
+            if (debug):
+                error.debug("scrubTitle: Warning: needed to replace a character in target Title: " + inlist)
         j=j+1
     t2 = "".join(t1)
     
@@ -98,7 +100,7 @@ def saveTarget (targetURL, savepath, saveTitle, overrideExtension=None):
         fileObject.write(targetObject.read())
         fileObject.close()
     except Exception as inst:
-        error.log("Picture failed to save: -1010 (fatal) =>\tSaveTitle:" + saveTitle + "\tExtension:" + extension)
+        error.log("Picture failed to save: -1010 (fatal) =>\tSaveTitle:" + saveTitle + "\tExtension:" + extension + "\tError =>\t" + str(inst))
         exit(-1010)
     
     if (debug):
@@ -154,7 +156,7 @@ def loadWebpage(url):
         datastream = looseDecoder(webpageObject.read(),4) #may help for webpages that seem to have one bad character
         #supertemp = (webpageObject.read()).decode('utf-8')
     except Exception as inst:
-        error.log("Decode Error: -1003 (fatal) =>" + "\tUTF-8 decode error, Force System Exit")
+        error.log("Decode Error: -1003 (fatal) =>" + "\tUTF-8 decode error, Force System Exit =>\t" + str(inst))
         exit(-1003)  
     webpageObject.close()
     if (debug):
@@ -175,7 +177,7 @@ def loadWebpage2(url):
             time.sleep(4)
         if (i==10):
             error.log("Coonection Timeout: -1013 (fatal) =>" + "\tTimeout while attempting to access webpage, Force System Exit")
-            exit(-1001)        
+            exit(-1013)        
         i = i+1    
         
     if (debug):
@@ -209,10 +211,16 @@ def parseTarget(datastream):
     targetEnd = "" #non-inclusive
     
     targets = []
+    '''
     if (blockStart == "" or blockEnd == ""):
         block = datastream
     else:
         block = datastream[datastream.find(blockStart):datastream.find(blockEnd, datastream.find(blockStart))+len(blockEnd)]
+    '''
+    if (blockStart == "" or blockEnd == ""):
+        blockStart = lineStart
+        blockEnd = lineEnd
+    block = datastream[datastream.find(blockStart):datastream.find(blockEnd, datastream.find(blockStart))+len(blockEnd)]
     while (block.find(lineStart) != -1):
         substring = block[block.find(lineStart):block.find(lineEnd, block.find(lineStart))+len(lineEnd)]
         targets.append(scrubURL(   substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]   ))
@@ -244,8 +252,10 @@ if __name__ == '__main__':
     debug           = True
     
     comicName       = "Comic Name"
-    URLStart        = "Start URL" #The urk ti start from
+    URLStart        = "Start URL" #The url to start from
     URLLast         = "End URL" #the last url in the comic series, to tell the program exactly where to stop
+    
+    numberWidth     = 4 #the number of digits used to index comics
     
     #Global variables for parsing webpages
     URLCurrent = URLStart
@@ -270,9 +280,9 @@ if __name__ == '__main__':
         error.log("Creating directory:\t" + "./saved/")
         os.makedirs("./saved/")
     
-    for i in range (startingNumber, startingNumber + pagesToScan): #used for loop as failsafe incase the exit condition doesn't work as inteneded        
+    for pageNumber in range (startingNumber, startingNumber + pagesToScan): #used for loop as failsafe incase the exit condition doesn't work as inteneded        
         datastream = loadWebpage(URLCurrent)
-        error.log("processing webpage (" + str(i) + ") = \t" + URLCurrent)
+        error.log("processing webpage (p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "-t" + str(comicNumber) + ") = \t" + URLCurrent)
         
         targetTitle = parseTitle(datastream)
         targetURL = parseTarget(datastream)
@@ -290,7 +300,7 @@ if __name__ == '__main__':
             
         #saves the target(s)
         if savewebpage == True:
-            saveTarget(URLCurrent, "saved/", "(" + comicName + " [" + str(comicNumber) + "-p" + str(i) + "]) " + targetTitle, ".html") #saveing html page        
+            saveTarget(URLCurrent, "saved/", "(" + comicName + " [" + str(comicNumber) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle, ".html") #saveing html page        
         for j in targetURL:
             saveTarget(j, "saved/", "(" + comicName + " [" + str(comicNumber) + "]) " + targetTitle) #saving comic image
             '''
@@ -305,10 +315,13 @@ if __name__ == '__main__':
             error.log("End condition detected, program exit")
             exit(0)
         
+        if (debug):
+            error.debug("Finished processing webpage (" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + ")")        
         #reset and reload
         if URLNext == None:
             error.log("Missing URLNext: -1005 (fatal) =>\tURLNext missing, end condition not detected, forceing system exit")
             exit(-1005)
+            
         URLCurrent = URLNext
         URLNext = None
         targetTitle = None
