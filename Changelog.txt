@@ -1,0 +1,47 @@
+Changlog:
+v4.7:
+-added version variable
+-synced with GitHub, switching over to using GitHub for version management
+-changed numbering scheme so all numbers are right justified with "0" padding
+-added some more debug output
+-altered praseTarget to only parse one target when block start/end not specified
+v4.6:
+-created loadwebpage2 as an auxilery webpage loader (if needed)
+-got rid of programVarient variable, no longer will be able to get next url by incrementing previous url
+v4.5:
+-Saves webpage with comic number AND page processed number
+v4.4:
+-now can save multiple targets per page, still unsure how to number them?
+-added debug variable for more detailed logging
+-reverted change to loop delay for failed connection attempts
+-changed error reporting for loose decoder
+-BUG: urllib.request.urlopen() can hang
+v4.3:
+-now uses while loop instead of for loop in some functions
+-made new variable comicNumber to seperate from webpage processing number
+v4.2:
+-split parser to be more modular, less dependent
+-cleaned some code in debug module
+-removed bad continginces in function saveTarget
+-minor code cleanup throughout program
+-overhaul of scrubURL function (based on scrubTitle function)
+-now logs when scrubURL actually scrubs something
+-made loadWebpage a function
+v4.1:
+-fixed error showing wrong information (1007)
+v4.0:
+-some minor code cleaning
+-complete overhaul of error logging
+-Uses LooseDecoder by default to decode webpages
+-Changed directory pictures are saved in
+-logs overwriting of file
+-better internal documentation
+v3.4:
+-modified scrubTitle function, only scrubs windows filesystem banned characters
+-changed error messages/codes
+v3.3:
+-modified scrubTitle function
+v3.2:
+-added user changable variable
+-removed references to random comics
+-started change log

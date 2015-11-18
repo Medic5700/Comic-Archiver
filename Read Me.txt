@@ -1,0 +1,15 @@
+# Comic-Archiver
+A (template for a) program for saving a local copy of a webcomic from the net (Essentially a web scraper)
+Since most websites are different, each site will need some code tweeking to save properly
+(Will mark those sections of code with #UserTweek)
+Most of the recoding will be in the 'parser' functions, or just under the __main__ declaration
+
+Notes:
+This program is old (PythonV2 old), and been through many revisions. But it works well enough to keep using it.
+
+Running:
+running the main program will autogenerate the "Debug.log" and a "saved" folder to store the targets
+
+BUG:
+-urllib.request.urlopen() can hang, causing program to hang
+

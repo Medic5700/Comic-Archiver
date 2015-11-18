@@ -5,6 +5,7 @@ Purpose: To archive various comics in a local copy
 import urllib.request #for url stuff
 import time #to sleep
 import os #for the folder manipulation
+version = "v4.7" #I know it's not proper coding to put a variable here, but here is where it makes sense?
 
 class Debug:
     #Used for logging and debuging
@@ -190,6 +191,7 @@ def parseTitle(datastream):
     '''
     Some HTML code
     '''
+    #UserTweek
     lineStart = "" #inclusive
     lineEnd = "" #inclusive
     targetStart = "" #non-inclusive
@@ -203,6 +205,7 @@ def parseTarget(datastream):
     '''
     Some HTML code
     '''
+    #UserTweek
     blockStart = "" #inclusive, optional
     blockEnd = "" #inclusive, optional
     lineStart = "" #inclusive
@@ -234,7 +237,8 @@ def parseURLNext(datastream):
     #finds URL of the next webpage (if needed)
     '''
     Some HTML code
-    '''    
+    '''
+    #UserTweek
     lineStart = "" #inclusive
     lineEnd = "" #inclusive
     targetStart = "" #non-inclusive
@@ -245,12 +249,14 @@ def parseURLNext(datastream):
     
 if __name__ == '__main__':
     #some prgrame options
+    #UserTweek
     savewebpage     = False
     loopDelay       = 1 #time in seconds
     startingNumber  = 1
     pagesToScan     = 10000 #number of pages that this program will scan
     debug           = True
     
+    #UserTweek
     comicName       = "Comic Name"
     URLStart        = "Start URL" #The url to start from
     URLLast         = "End URL" #the last url in the comic series, to tell the program exactly where to stop
@@ -271,7 +277,7 @@ if __name__ == '__main__':
     '''
 
     error = Debug() #the error logging
-    error.log("Comic Archiver has started ==================================================")    
+    error.log("Comic Archiver has started, Version: " + version + " ==================================================")    
     if (debug):
         error.log("Debug logging is enabled")
 
