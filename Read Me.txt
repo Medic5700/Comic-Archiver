@@ -3,13 +3,16 @@ A (template for a) program for saving a local copy of a webcomic from the net (E
 Since most websites are different, each site will need some code tweeking to save properly
 (Will mark those sections of code with #UserTweek)
 Most of the recoding will be in the 'parser' functions, or just under the __main__ declaration
-
-Notes:
-This program is old (PythonV2 old), and been through many revisions. But it works well enough to keep using it.
+// This program is old (PythonV2 old), and been through many revisions. But it works well enough to keep using it.
 
 Running:
 running the main program will autogenerate the "Debug.log" and a "saved" folder to store the targets
 
-BUG:
--urllib.request.urlopen() can hang, causing program to hang
+TODO:
+-test if comic archiver parser functions are capable of reterning Null or "" if string not found
+-perhaps make an option to load a config file instead of having to manually alter source code?
 
+BUGS:
+-urllib.request.urlopen() can hang, causing program to hang
+-checkpoints save on pages that are ABOUT to be processed, not pages that HAVE been processed
+-checkpoint is saved immediatly after loading a checkpoint
