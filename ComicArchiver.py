@@ -1,37 +1,35 @@
 '''
 Author: Medic5700
-Purpose: To archive various comics in a local copy
+Purpose: To archive various webcomics in a local copy
 '''
 import urllib.request #for url stuff
 import time #to sleep
-import os #for the folder manipulation
-version = "v4.8" #I know it's not proper coding to put a variable here, but here is where it makes sense?
+import os #for the filesystem manipulation
+version = "v4.8.1" #I know it's not proper coding to put a variable here, but here is where it makes sense?
 
 class Debug:
-    #Used for logging and debuging
-    def __init__(self, debugMode, file="Debug.log"):
-        self.message = ""
-        self.filename = file
+    #Class for logging and debuging
+    #required to be initalized below the declaration for global variables
+    def __init__(self, debugMode, file="ComicArchiver.log"):
+        self.__filename = file
         self.showDebug = debugMode #Bool
         
-    def save(self):
-        logfile = open(self.filename, 'a')
-        logfile.write(self.message)
+    def __save(self, text):
+        logfile = open(self.__filename, 'a')
+        logfile.write(text)
         logfile.close()
 
     def log(self, text):
         #pushes text to stdout AND to the log file
         temp = "[" + time.asctime() + "] Log: " + text
         print(temp)
-        self.message = temp + "\n"
-        self.save()
+        self.__save(temp + "\n")
     
     def err(self, text):
-        #The same as log, but meant to be used for program crashing errors?
+        #The same as log, but meant to be used for program crashing errors
         temp = "[" + time.asctime() + "] ERR: " + text
         print(temp)
-        self.message = temp + "\n"
-        self.save()        
+        self.__save(temp + "\n")        
     
     def debug(self, *args):
         #pushes text to stdout AND to the log file, takes as many arguments as needed
@@ -40,21 +38,22 @@ class Debug:
             for i in args:
                 temp += "\t" + str(i) + "\n"
             print(temp)
-            self.message = temp
-            self.save()
+            self.__save(temp)
     
 class SpecialCases:
+    #Class for handling special cases triggered by URLCurrent matching a key in the dictionary
     def __init__(self, specialCases={}):
-        self.cases = specialCases
+        assert (type(specialCases) == type({})),"SpecialCases -> __init__ -> arg1: specialCases needs to be a dictionary"
+        self.__cases = specialCases
         
     def trigger(self, url):
-        # this determins if the current page is a special case
-        if (url in self.cases):
+        #This determins if the current page is a special case
+        if (url in self.__cases):
             error.log("Special Case detected: " + url)
-            self.sandbox(self.cases[url])
+            self.__sandbox(self.cases[url])
     
-    def sandbox(self, code):
-        # a sandbox to run exec in with limited access to the rest of the program, still not the most secure, but more secure then nothing
+    def __sandbox(self, code):
+        #A sandbox to run exec in with limited access to the rest of the program, still not the most secure, but more secure then nothing
         global URLCurrent
         global URLNext
         global targetTitle
@@ -70,16 +69,18 @@ class SpecialCases:
         targetURL = sandboxScope['targetURL']
         
         error.debug("After executing exec command","targetTitle = "+targetTitle, "targetURL = "+str(targetURL), "URLNext = "+URLNext, "URLCurrent = "+URLCurrent)
-        #TODO: Assert variables are the right type    
+        #TODO: Assert variables are the right type, only change variables if they change  
     
 class Checkpoint:
-    def __init__(self,name):
+    #Class for loading and saving checkpoints
+    def __init__(self,name="Checkpoint.csv",checkpointFrequency=16):
         global URLCurrent
         global pageNumber
         global comicNumber        
+        assert (checkpointFrequency>0),"Checkpoint -> __init__ -> arg2: checkpointFrequency needs to be greater then 0"
         self.filename = name
-        self.checkpointFrequency = None
-        self.callsSinceLastCheckpoint = None
+        self.__checkpointFrequency = checkpointFrequency
+        self.__callsSinceLastCheckpoint = 0
         if not (os.path.exists(self.filename)):
             error.log("Creating checkpoint file")
             file = open(self.filename,'w')
@@ -92,11 +93,16 @@ class Checkpoint:
         global pageNumber
         global comicNumber
         
+        error.debug("Attempting to load checkpoint")
+        raw = None
         try:
-            error.debug("Attempting to load checkpoint")
             file = open(self.filename, 'r')
             raw = file.read().split('\n')
             file.close()
+        except Exception as exception:
+            error.err("Could not load checkpoint file: " + self.filename)
+        
+        try:
             line = raw[len(raw)-2]
             error.debug("line: " + str(line))
             
@@ -105,17 +111,22 @@ class Checkpoint:
             comicNumber = int((line.split(','))[2])
             error.log("Checkpoint Loaded: " + URLCurrent)
         except Exception as exception:
-            error.err("Could not load checkpoint file: " + self.filename)
+            error.err("Checkpoint file not formated correctly: " + self.filename)
         
     def save(self):
         global URLCurrent
         global pageNumber
         global comicNumber
-        file = open(self.filename, 'a')
-        file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
-        file.close()
         
-        error.log("Checkpoint Saved: " + URLCurrent)
+        if(self.__callsSinceLastCheckpoint == self.__checkpointFrequency - 1):
+            file = open(self.filename, 'a')
+            file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
+            file.close()
+            
+            error.log("Checkpoint Saved: " + URLCurrent)
+            self.__callsSinceLastCheckpoint = 0
+        else:
+            self.__callsSinceLastCheckpoint = self.__callsSinceLastCheckpoint + 1
         
 def scrubURL(inlist):
     #should not be needed
@@ -286,18 +297,13 @@ def parseTarget(datastream):
     targetEnd = "" #non-inclusive
     
     targets = []
-    '''
-    if (blockStart == "" or blockEnd == ""):
-        block = datastream
-    else:
-        block = datastream[datastream.find(blockStart):datastream.find(blockEnd, datastream.find(blockStart))+len(blockEnd)]
-    '''
     if (blockStart == "" or blockEnd == ""):
         blockStart = lineStart
         blockEnd = lineEnd
     block = datastream[datastream.find(blockStart):datastream.find(blockEnd, datastream.find(blockStart))+len(blockEnd)]
     while (block.find(lineStart) != -1):
         substring = block[block.find(lineStart):block.find(lineEnd, block.find(lineStart))+len(lineEnd)]
+        
         targets.append(scrubURL(   substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]   ))
         block = block[block.find(lineEnd, block.find(lineStart))+len(lineEnd) : -1]
         error.debug("parseTarget - found linestart = " + str(block.find(lineStart) != -1), "parseTarget - len(block) = "+str(len(block)), "parseTarget - targets = "+str(targets))        
@@ -325,7 +331,7 @@ if __name__ == '__main__':
     loopDelay       = 1 #time in seconds
     pagesToScan     = 10000 #number of pages that this program will scan
     debugMode       = False
-    useCheckpoints  = True
+    useCheckpoints  = False
     
     #UserTweek
     comicName       = "Comic Name"
@@ -359,7 +365,7 @@ if __name__ == '__main__':
     
     if (useCheckpoints):
         error.log("Checkpoints Enabled")
-        check = Checkpoint("Checkpoint.txt")
+        check = Checkpoint("Checkpoint.csv",16)
         check.load()    
 
     #create folder if it doesn't exsist
@@ -368,7 +374,7 @@ if __name__ == '__main__':
         os.makedirs("./saved/")
     
     for i in range (0, pagesToScan): #used for loop as failsafe incase the exit condition doesn't work as inteneded
-        if (useCheckpoints and (pageNumber % 10 == 0)):
+        if (useCheckpoints):
             check.save()
         
         datastream = loadWebpage(URLCurrent)
@@ -401,17 +407,15 @@ if __name__ == '__main__':
             '''
             comicNumber = comicNumber + 1
 
-        #check for conclusion of comic
-        if URLCurrent == URLLast:
-            error.log("End condition detected, program exit")
-            exit(0)
-        
         error.debug("Finished processing webpage (" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + ")")        
-        #reset and reload
-        if URLNext == None:
+        if URLCurrent == URLLast: #check for conclusion of comic
+            error.log("End condition detected, program exit")
+            exit(0)        
+        
+        if URLNext == None: #TODO this check should happen with URLCurrent at the top
             error.err("Missing URLNext: -1005 (fatal) =>\tURLNext missing, end condition not detected, forceing system exit")
             exit(-1005)
-            
+        #reset and reload
         pageNumber = pageNumber + 1
         URLCurrent = URLNext
         URLNext = None
