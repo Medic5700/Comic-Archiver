@@ -50,7 +50,7 @@ class SpecialCases:
         #This determins if the current page is a special case
         if (url in self.__cases):
             error.log("Special Case detected: " + url)
-            self.__sandbox(self.cases[url])
+            self.__sandbox(self.__cases[url])
     
     def __sandbox(self, code):
         #A sandbox to run exec in with limited access to the rest of the program, still not the most secure, but more secure then nothing
