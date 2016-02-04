@@ -13,6 +13,11 @@ TODO:
 -perhaps make an option to load a config file instead of having to manually alter source code?
 -scrub "http://" from endcase detection?
 -improve sandbox code execution, more failsafes
+-make scrubTitle more flexable
+-scrubTitle should be used in main loop, not in parser fuctions
+-if debug.err invoked, print last x lines of debug dialog, even if debuging is disabled
+-build error handling into savetarget2 function
+-replace subprocess.check_output with subprocess.run # https://docs.python.org/3.5/library/subprocess.html
 
 BUGS:
 -urllib.request.urlopen() can hang, causing program to hang

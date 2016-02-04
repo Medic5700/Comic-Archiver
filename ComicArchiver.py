@@ -5,7 +5,7 @@ Purpose: To archive various webcomics in a local copy
 import urllib.request #for url stuff
 import time #to sleep
 import os #for the filesystem manipulation
-version = "v4.8.1" #I know it's not proper coding to put a variable here, but here is where it makes sense?
+version = "v4.8.2" #I know it's not proper coding to put a variable here, but here is where it makes sense?
 
 class Debug:
     #Class for logging and debuging
@@ -21,6 +21,7 @@ class Debug:
 
     def log(self, text):
         #pushes text to stdout AND to the log file
+        #For general logging, and non-fatal errors
         temp = "[" + time.asctime() + "] Log: " + text
         print(temp)
         self.__save(temp + "\n")
@@ -33,6 +34,7 @@ class Debug:
     
     def debug(self, *args):
         #pushes text to stdout AND to the log file, takes as many arguments as needed
+        #only shows up in log when debugging is enables
         if (self.showDebug):
             temp = "Debug:"
             for i in args:
@@ -82,7 +84,7 @@ class Checkpoint:
         self.__checkpointFrequency = checkpointFrequency
         self.__callsSinceLastCheckpoint = 0
         if not (os.path.exists(self.filename)):
-            error.log("Creating checkpoint file")
+            error.log("Checkpoint file not found, creating checkpoint file")
             file = open(self.filename,'w')
             file.write("URLCurrent,pageNumber,comicNumber\n")
             file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
@@ -149,7 +151,7 @@ def scrubTitle(inlist):
     #takes a string, removes and converts non-windows file system friendly chars OR unicod chars OR chars in the extanded ascii table, and returns the string
     t1 = list(inlist)
     #acceptableCharacters = " ()[]{}.-%#0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-    unacceptableCharacters = "\\/:*?\"<>|"
+    unacceptableCharacters = "\\/:*?\"<>|\t\n"
     
     j=0
     while (j<len(t1)):
@@ -164,8 +166,8 @@ def scrubTitle(inlist):
         return t2[0:80]
     return t2
 
-def saveTarget (targetURL, savepath, saveTitle, overrideExtension=None):
-    #assumes savepath is valid
+def saveTarget (targetURL, savePath, saveTitle, overrideExtension=None):
+    #assumes savePath is valid
     error.debug("Attempting to save = " + targetURL)
     
     extension = targetURL[targetURL.rfind('.'):len(targetURL)]
@@ -180,16 +182,16 @@ def saveTarget (targetURL, savepath, saveTitle, overrideExtension=None):
             targetObject = (urllib.request.urlopen(targetURL))
         except Exception as inst: #handles timeout I think
             error.log("Connection Fail: 1007 (non-fatal) =>" + '\tAttempt ' + str(i) + ":" + str(inst) + ":\t" + str(targetURL))
+            time.sleep(4)  
         if (i == 10): #FAILSAFE
             error.err("Picture Load Timeout: -1008 (fatal) =>\tFailed to load picture, Forcing system exit")
             exit(-1008)
-        time.sleep(4)  
         i = i+1
 
     try:
-        if (os.path.exists(savepath + "/" + saveTitle + extension)): #checks if file exists
-            error.log("File exists: 1012 (non-fatal) => \tOverwriting existing file: \t" + savepath + "/" + saveTitle + extension)
-        fileObject = open(savepath + "/" + saveTitle + extension, 'wb')
+        if (os.path.exists(savePath + "/" + saveTitle + extension)): #checks if file exists
+            error.log("File exists: 1012 (non-fatal) => \tOverwriting existing file: \t" + savePath + "/" + saveTitle + extension)
+        fileObject = open(savePath + "/" + saveTitle + extension, 'wb')
         fileObject.write(targetObject.read())
         fileObject.close()
     except Exception as inst:
@@ -198,6 +200,22 @@ def saveTarget (targetURL, savepath, saveTitle, overrideExtension=None):
     
     error.debug("target saved")
     targetObject.close()
+
+def saveTarget2 (targetURL, savePath, saveTitle, overrideExtension=None):
+    #Uses windows powershell to save a target
+    import subprocess #for exicuting shell commands
+    error.debug("Attempting to save = " + targetURL)
+    error.debug("savePath:" + savePath, "saveTitle:" + saveTitle)
+    
+    extension = targetURL[targetURL.rfind('.'):len(targetURL)]
+    if (overrideExtension != None):
+        extension = overrideExtension    
+    ''' #Sudo code for powershell comand
+    Invoke-WebRequest $targetURL -OutFile (savePath + "test.jpg"); mv -literalpath (savePath + "test.jpg") (savePath + saveTitle + extension)
+    '''
+    subprocess.check_output(["powershell","Invoke-WebRequest \""+targetURL+"\" -OutFile \"" + savePath + "test.jpg" + "\"; mv -literalpath '" + savePath + "test.jpg" + "' '" + savePath + saveTitle + extension + "'"])
+    error.debug("target saved")
+    #TODO: Error Handling
 
 def looseDecoder(datastream, blocksize):
     #a loose webpage decoder, converts blocks of text at a time incase a couple characters are not decodable.
@@ -251,9 +269,10 @@ def loadWebpage(url):
 
 def loadWebpage2(url):
     #an alternate way to load webpages via powershell?
+    import subprocess #for exicuting shell commands
     datastream = None
     i = 0
-    while ((i<=10) and (webpageObject == None)):
+    while ((i<=10) and (datastream == None)):
         try:
             error.debug("Loading "+url)
             datastream = str(    subprocess.check_output(["powershell","(Invoke-WebRequest \""+url+"\").Content"])    )
@@ -281,7 +300,7 @@ def parseTitle(datastream):
     targetEnd = "" #non-inclusive
     
     substring = datastream[datastream.find(lineStart):datastream.find(lineEnd, datastream.find(lineStart))+len(lineEnd)]
-    return scrubTitle(   substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]   )
+    return substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]
 
 def parseTarget(datastream):
     #find the target (picture) URL
@@ -322,25 +341,22 @@ def parseURLNext(datastream):
     targetEnd = "" #non-inclusive
     
     substring = datastream[datastream.find(lineStart):datastream.find(lineEnd, datastream.find(lineStart))+len(lineEnd)]
-    return scrubURL(   substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]   )    
+    return substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]
     
 if __name__ == '__main__':
-    #some prgrame options
-    #UserTweek
-    savewebpage     = False
-    loopDelay       = 1 #time in seconds
-    pagesToScan     = 10000 #number of pages that this program will scan
-    debugMode       = False
-    useCheckpoints  = False
-    
-    #UserTweek
+    #These options needs to be configured
     comicName       = "Comic Name"
     URLStart        = "Start URL" #The url to start from
     URLLast         = "End URL" #the last url in the comic series, to tell the program exactly where to stop
+    savewebpage     = False #saves the HTML of the webpage
+    pagesToScan     = 9999 #Maximum number of pages that this program will scan in one go
+    debugMode       = False
+    useCheckpoints  = False    
     
-    cases           = {} #a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)
-    
+    #Other program options
+    cases           = {} #a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)    
     numberWidth     = 4 #the number of digits used to index comics
+    loopDelay       = 0 #time in seconds
     
     #Global variables for parsing webpages
     URLCurrent = URLStart
@@ -356,16 +372,16 @@ if __name__ == '__main__':
     names.close()
     '''
 
-    error = Debug(debugMode, "ComicArchiver.log") #Initialize the logging class
+    error = Debug(debugMode, "ComicArchiver.log") #Initialize the Logging Class
     error.log("Comic Archiver has started, Version: " + version + " ==================================================")    
     if (debugMode):
         error.log("Debug logging is enabled")
         
-    special = SpecialCases(cases)
+    special = SpecialCases(cases) #Initialize the SpecialCases Class
     
     if (useCheckpoints):
         error.log("Checkpoints Enabled")
-        check = Checkpoint("Checkpoint.csv",16)
+        check = Checkpoint("ComicArchiver-Checkpoint.csv",16) #Initialize the Checkpoint Class
         check.load()    
 
     #create folder if it doesn't exsist
@@ -380,9 +396,9 @@ if __name__ == '__main__':
         datastream = loadWebpage(URLCurrent)
         error.log("processing webpage (p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "-t" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + ") = \t" + URLCurrent)
         
-        targetTitle = parseTitle(datastream)
+        targetTitle = scrubTitle( parseTitle(datastream) )
         targetURL = parseTarget(datastream)
-        URLNext = parseURLNext(datastream)
+        URLNext = scrubURL( parseURLNext(datastream) )
 
         special.trigger(URLCurrent)
 
@@ -390,8 +406,8 @@ if __name__ == '__main__':
             error.err("Missing Target: -1004")
             exit(-1004)
         if (targetURL == None):
-            error.err("Missing TargetURL: -1006")
-            exit(-1006)
+            error.err("Missing TargetURL: 1006")
+            exit(1006)
             
         error.debug("targetTitle = "+targetTitle, "targetURL = "+str(targetURL), "URLNext = "+URLNext)
             
