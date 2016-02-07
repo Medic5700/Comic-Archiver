@@ -5,7 +5,8 @@ Purpose: To archive various webcomics in a local copy
 import urllib.request #for url stuff
 import time #to sleep
 import os #for the filesystem manipulation
-version = "v4.8.2" #I know it's not proper coding to put a variable here, but here is where it makes sense?
+import subprocess #used for saving stuff from the web using the system shell commands (if urllib fails)
+version = "v4.8.3" #I know it's not proper coding to put a variable here, but here is where it makes sense?
 
 class Debug:
     #Class for logging and debuging
@@ -39,7 +40,7 @@ class Debug:
             temp = "Debug:"
             for i in args:
                 temp += "\t" + str(i) + "\n"
-            print(temp)
+            print(temp, end="") #fixes issue where log and sceen output newlines don't match
             self.__save(temp)
     
 class SpecialCases:
@@ -203,14 +204,14 @@ def saveTarget (targetURL, savePath, saveTitle, overrideExtension=None):
 
 def saveTarget2 (targetURL, savePath, saveTitle, overrideExtension=None):
     #Uses windows powershell to save a target
-    import subprocess #for exicuting shell commands
+    
     error.debug("Attempting to save = " + targetURL)
     error.debug("savePath:" + savePath, "saveTitle:" + saveTitle)
     
     extension = targetURL[targetURL.rfind('.'):len(targetURL)]
     if (overrideExtension != None):
-        extension = overrideExtension    
-    ''' #Sudo code for powershell comand
+        extension = overrideExtension
+    ''' #Sudo code for powershell command
     Invoke-WebRequest $targetURL -OutFile (savePath + "test.jpg"); mv -literalpath (savePath + "test.jpg") (savePath + saveTitle + extension)
     '''
     subprocess.check_output(["powershell","Invoke-WebRequest \""+targetURL+"\" -OutFile \"" + savePath + "test.jpg" + "\"; mv -literalpath '" + savePath + "test.jpg" + "' '" + savePath + saveTitle + extension + "'"])
@@ -268,8 +269,7 @@ def loadWebpage(url):
     return datastream
 
 def loadWebpage2(url):
-    #an alternate way to load webpages via powershell?
-    import subprocess #for exicuting shell commands
+    #an alternate way to load webpages via powershell
     datastream = None
     i = 0
     while ((i<=10) and (datastream == None)):
@@ -289,7 +289,6 @@ def loadWebpage2(url):
     
 def parseTitle(datastream):
     #find the target title
-    #TODO: decide wheather to scrube targetTitle AND replace the forward slashes with a dot (for when titles are just the date)[probibly should make a function to do just that]
     '''
     Some HTML code
     '''
@@ -320,17 +319,22 @@ def parseTarget(datastream):
         blockStart = lineStart
         blockEnd = lineEnd
     block = datastream[datastream.find(blockStart):datastream.find(blockEnd, datastream.find(blockStart))+len(blockEnd)]
-    while (block.find(lineStart) != -1):
+    error.debug("parseTarget - Block = " + str(block))
+    while (block.find(lineStart) != -1): #goes through block for each lineStart
         substring = block[block.find(lineStart):block.find(lineEnd, block.find(lineStart))+len(lineEnd)]
-        
-        targets.append(scrubURL(   substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]   ))
+        error.debug("parseTarget - substring = " + str(substring))
+        if (substring.find(targetStart) != -1): #skips substring if targetStart isn't found
+            targets.append(   substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]   )
+            error.debug("parseTarget - Target Found")
+        else:
+            error.debug("praseTarget - Target not found")
         block = block[block.find(lineEnd, block.find(lineStart))+len(lineEnd) : -1]
         error.debug("parseTarget - found linestart = " + str(block.find(lineStart) != -1), "parseTarget - len(block) = "+str(len(block)), "parseTarget - targets = "+str(targets))        
-
+        
     return targets
 
 def parseURLNext(datastream):
-    #finds URL of the next webpage (if needed)
+    #finds URL of the next webpage
     '''
     Some HTML code
     '''
@@ -344,14 +348,14 @@ def parseURLNext(datastream):
     return substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]
     
 if __name__ == '__main__':
-    #These options needs to be configured
+    #These options need to be configured
     comicName       = "Comic Name"
     URLStart        = "Start URL" #The url to start from
     URLLast         = "End URL" #the last url in the comic series, to tell the program exactly where to stop
     savewebpage     = False #saves the HTML of the webpage
     pagesToScan     = 9999 #Maximum number of pages that this program will scan in one go
     debugMode       = False
-    useCheckpoints  = False    
+    useCheckpoints  = False
     
     #Other program options
     cases           = {} #a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)    
@@ -376,28 +380,26 @@ if __name__ == '__main__':
     error.log("Comic Archiver has started, Version: " + version + " ==================================================")    
     if (debugMode):
         error.log("Debug logging is enabled")
-        
     special = SpecialCases(cases) #Initialize the SpecialCases Class
-    
     if (useCheckpoints):
         error.log("Checkpoints Enabled")
         check = Checkpoint("ComicArchiver-Checkpoint.csv",16) #Initialize the Checkpoint Class
         check.load()    
-
-    #create folder if it doesn't exsist
-    if not (os.path.exists("./saved/")):
+    if not (os.path.exists("./saved/")): #create folder if it doesn't exsist
         error.log("Creating directory:\t" + "./saved/")
         os.makedirs("./saved/")
     
     for i in range (0, pagesToScan): #used for loop as failsafe incase the exit condition doesn't work as inteneded
         if (useCheckpoints):
             check.save()
-        
         datastream = loadWebpage(URLCurrent)
         error.log("processing webpage (p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "-t" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + ") = \t" + URLCurrent)
         
+        #This is where the parse Functions are called
         targetTitle = scrubTitle( parseTitle(datastream) )
         targetURL = parseTarget(datastream)
+        for i in range(len(targetURL)):
+            targetURL[i] = scrubURL(targetURL[i])        
         URLNext = scrubURL( parseURLNext(datastream) )
 
         special.trigger(URLCurrent)
@@ -405,9 +407,8 @@ if __name__ == '__main__':
         if (targetTitle == None):
             error.err("Missing Target: -1004")
             exit(-1004)
-        if (targetURL == None):
-            error.err("Missing TargetURL: 1006")
-            exit(1006)
+        if (targetURL == []):
+            error.log("Missing TargetURLs: 1006 (non-fatal)")
             
         error.debug("targetTitle = "+targetTitle, "targetURL = "+str(targetURL), "URLNext = "+URLNext)
             
