@@ -287,20 +287,6 @@ def loadWebpage2(url):
     error.debug("Webpage loaded")    
     return datastream
     
-def parseTitle(datastream):
-    #find the target title
-    '''
-    Some HTML code
-    '''
-    #UserTweek
-    lineStart = "" #inclusive
-    lineEnd = "" #inclusive
-    targetStart = "" #non-inclusive
-    targetEnd = "" #non-inclusive
-    
-    substring = datastream[datastream.find(lineStart):datastream.find(lineEnd, datastream.find(lineStart))+len(lineEnd)]
-    return substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]
-
 def parseTarget(datastream):
     #find the target (picture) URL
     '''
@@ -320,18 +306,56 @@ def parseTarget(datastream):
         blockEnd = lineEnd
     block = datastream[datastream.find(blockStart):datastream.find(blockEnd, datastream.find(blockStart))+len(blockEnd)]
     error.debug("parseTarget - Block = " + str(block))
-    while (block.find(lineStart) != -1): #goes through block for each lineStart
+    while ((lineStart in block) and (lineEnd in block)): #goes through block for each lineStart
         substring = block[block.find(lineStart):block.find(lineEnd, block.find(lineStart))+len(lineEnd)]
         error.debug("parseTarget - substring = " + str(substring))
-        if (substring.find(targetStart) != -1): #skips substring if targetStart isn't found
-            targets.append(   substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]   )
-            error.debug("parseTarget - Target Found")
-        else:
+        
+        try: #skips substring if targetStart isn't found
+            targets.append(   substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]   )
+            #error.debug("parseTarget - Target Found")
+        except:
             error.debug("praseTarget - Target not found")
+            
         block = block[block.find(lineEnd, block.find(lineStart))+len(lineEnd) : -1]
         error.debug("parseTarget - found linestart = " + str(block.find(lineStart) != -1), "parseTarget - len(block) = "+str(len(block)), "parseTarget - targets = "+str(targets))        
         
     return targets
+
+def parseTitle(datastream):
+    #find the target title
+    '''
+    Some HTML code
+    '''
+    #UserTweek
+    lineStart = "" #inclusive
+    lineEnd = "" #inclusive
+    targetStart = "" #non-inclusive
+    targetEnd = "" #non-inclusive
+    
+    try:
+        substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
+        return substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]
+    except:
+        error.debug("parseTitle => Title not found, returning \"\"")
+        return ""
+
+def parseDescription(datastream):
+    #Used to find (and return) the description of a target, returns "" is description not found
+    '''
+    Some HTML code
+    '''
+    #UserTweek
+    lineStart = "" #inclusive
+    lineEnd = "" #inclusive
+    targetStart = "" #non-inclusive
+    targetEnd = "" #non-inclusive
+    
+    try:
+        substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
+        return substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]
+    except:
+        error.debug("parseDescription => target not found, returning \"\"")
+        return ""
 
 def parseURLNext(datastream):
     #finds URL of the next webpage
@@ -344,18 +368,22 @@ def parseURLNext(datastream):
     targetStart = "" #non-inclusive
     targetEnd = "" #non-inclusive
     
-    substring = datastream[datastream.find(lineStart):datastream.find(lineEnd, datastream.find(lineStart))+len(lineEnd)]
-    return substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]
+    try:
+        substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
+        return substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]
+    except:
+        error.debug("parseURLNext => Next URL not found")
+        return ""
     
 if __name__ == '__main__':
     #These options need to be configured
     comicName       = "Comic Name"
     URLStart        = "Start URL" #The url to start from
     URLLast         = "End URL" #the last url in the comic series, to tell the program exactly where to stop
-    savewebpage     = False #saves the HTML of the webpage
     pagesToScan     = 9999 #Maximum number of pages that this program will scan in one go
     debugMode       = False
     useCheckpoints  = False
+    savewebpage     = False #saves the HTML of the webpage
     
     #Other program options
     cases           = {} #a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)    
@@ -419,7 +447,7 @@ if __name__ == '__main__':
             saveTarget(j, "saved/", "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle) #saving comic image
             '''
             names = open("Names.csv",'a')
-            names.write(j + "," + j[j.find("comics")+7:len(j)] + "," + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle + j[j.rfind('.'):len(j)] +"\n")
+            names.write(j + "," + j[j.rfind("/"):len(j)] + "," + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle + j[j.rfind('.'):len(j)] +"\n")
             names.close()
             '''
             comicNumber = comicNumber + 1
