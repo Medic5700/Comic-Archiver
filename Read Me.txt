@@ -3,14 +3,20 @@ A (template for a) program for saving a local copy of a webcomic from the net (E
 Since most websites are different, each site will need some code tweeking to save properly
 (Will mark those sections of code with #UserTweek)
 Most of the recoding will be in the 'parser' functions, or just under the __main__ declaration
-// This program is old (PythonV2 old), and been through many revisions. But it works well enough to keep using it.
+// This program is old (since Python2 old), and been through many revisions. But it works well enough to keep using it.
 
 Running:
-running the main program will autogenerate the "Debug.log" and a "saved" folder to store the targets
+running the main program will autogenerate the "ComicArchiver.log" and a "saved" folder to store the targets
 
 TODO:
--test if comic archiver parser functions are capable of reterning Null or "" if string not found
 -perhaps make an option to load a config file instead of having to manually alter source code?
+-scrub "http://" from endcase detection?
+-improve sandbox code execution, more failsafes
+-make scrubTitle more flexable
+-scrubTitle should be used in main loop, not in parser fuctions
+-if debug.err invoked, print last x lines of debug dialog, even if debuging is disabled
+-build error handling into savetarget2 function
+-replace subprocess.check_output with subprocess.run # https://docs.python.org/3.5/library/subprocess.html
 
 BUGS:
 -urllib.request.urlopen() can hang, causing program to hang

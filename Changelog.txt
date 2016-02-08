@@ -5,7 +5,7 @@ v4.8:
 -added extra ERR logging function
 -now able to change log file save name
 -added ability to detect specified pages as special cases, and execute specified code for that special case (still figureing out the security on that one)
--NOW the numbering has changed to all numbers are right justified with "0" padding
+-NOW the numbering has changed so all numbers are right justified with "0" padding
 v4.7:
 -added version variable
 -synced with GitHub, switching over to using GitHub for version management

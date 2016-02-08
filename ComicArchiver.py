@@ -1,60 +1,62 @@
 '''
 Author: Medic5700
-Purpose: To archive various comics in a local copy
+Purpose: To archive various webcomics in a local copy
 '''
 import urllib.request #for url stuff
 import time #to sleep
-import os #for the folder manipulation
-version = "v4.8" #I know it's not proper coding to put a variable here, but here is where it makes sense?
+import os #for the filesystem manipulation
+import subprocess #used for saving stuff from the web using the system shell commands (if urllib fails)
+version = "v4.8.3" #I know it's not proper coding to put a variable here, but here is where it makes sense?
 
 class Debug:
-    #Used for logging and debuging
-    def __init__(self, debugMode, file="Debug.log"):
-        self.message = ""
-        self.filename = file
+    #Class for logging and debuging
+    #required to be initalized below the declaration for global variables
+    def __init__(self, debugMode, file="ComicArchiver.log"):
+        self.__filename = file
         self.showDebug = debugMode #Bool
         
-    def save(self):
-        logfile = open(self.filename, 'a')
-        logfile.write(self.message)
+    def __save(self, text):
+        logfile = open(self.__filename, 'a')
+        logfile.write(text)
         logfile.close()
 
     def log(self, text):
         #pushes text to stdout AND to the log file
+        #For general logging, and non-fatal errors
         temp = "[" + time.asctime() + "] Log: " + text
         print(temp)
-        self.message = temp + "\n"
-        self.save()
+        self.__save(temp + "\n")
     
     def err(self, text):
-        #The same as log, but meant to be used for program crashing errors?
+        #The same as log, but meant to be used for program crashing errors
         temp = "[" + time.asctime() + "] ERR: " + text
         print(temp)
-        self.message = temp + "\n"
-        self.save()        
+        self.__save(temp + "\n")        
     
     def debug(self, *args):
         #pushes text to stdout AND to the log file, takes as many arguments as needed
+        #only shows up in log when debugging is enables
         if (self.showDebug):
             temp = "Debug:"
             for i in args:
                 temp += "\t" + str(i) + "\n"
-            print(temp)
-            self.message = temp
-            self.save()
+            print(temp, end="") #fixes issue where log and sceen output newlines don't match
+            self.__save(temp)
     
 class SpecialCases:
+    #Class for handling special cases triggered by URLCurrent matching a key in the dictionary
     def __init__(self, specialCases={}):
-        self.cases = specialCases
+        assert (type(specialCases) == type({})),"SpecialCases -> __init__ -> arg1: specialCases needs to be a dictionary"
+        self.__cases = specialCases
         
     def trigger(self, url):
-        # this determins if the current page is a special case
-        if (url in self.cases):
+        #This determins if the current page is a special case
+        if (url in self.__cases):
             error.log("Special Case detected: " + url)
-            self.sandbox(self.cases[url])
+            self.__sandbox(self.__cases[url])
     
-    def sandbox(self, code):
-        # a sandbox to run exec in with limited access to the rest of the program, still not the most secure, but more secure then nothing
+    def __sandbox(self, code):
+        #A sandbox to run exec in with limited access to the rest of the program, still not the most secure, but more secure then nothing
         global URLCurrent
         global URLNext
         global targetTitle
@@ -70,18 +72,20 @@ class SpecialCases:
         targetURL = sandboxScope['targetURL']
         
         error.debug("After executing exec command","targetTitle = "+targetTitle, "targetURL = "+str(targetURL), "URLNext = "+URLNext, "URLCurrent = "+URLCurrent)
-        #TODO: Assert variables are the right type    
+        #TODO: Assert variables are the right type, only change variables if they change  
     
 class Checkpoint:
-    def __init__(self,name):
+    #Class for loading and saving checkpoints
+    def __init__(self,name="Checkpoint.csv",checkpointFrequency=16):
         global URLCurrent
         global pageNumber
         global comicNumber        
+        assert (checkpointFrequency>0),"Checkpoint -> __init__ -> arg2: checkpointFrequency needs to be greater then 0"
         self.filename = name
-        self.checkpointFrequency = None
-        self.callsSinceLastCheckpoint = None
+        self.__checkpointFrequency = checkpointFrequency
+        self.__callsSinceLastCheckpoint = 0
         if not (os.path.exists(self.filename)):
-            error.log("Creating checkpoint file")
+            error.log("Checkpoint file not found, creating checkpoint file")
             file = open(self.filename,'w')
             file.write("URLCurrent,pageNumber,comicNumber\n")
             file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
@@ -92,11 +96,16 @@ class Checkpoint:
         global pageNumber
         global comicNumber
         
+        error.debug("Attempting to load checkpoint")
+        raw = None
         try:
-            error.debug("Attempting to load checkpoint")
             file = open(self.filename, 'r')
             raw = file.read().split('\n')
             file.close()
+        except Exception as exception:
+            error.err("Could not load checkpoint file: " + self.filename)
+        
+        try:
             line = raw[len(raw)-2]
             error.debug("line: " + str(line))
             
@@ -105,17 +114,22 @@ class Checkpoint:
             comicNumber = int((line.split(','))[2])
             error.log("Checkpoint Loaded: " + URLCurrent)
         except Exception as exception:
-            error.err("Could not load checkpoint file: " + self.filename)
+            error.err("Checkpoint file not formated correctly: " + self.filename)
         
     def save(self):
         global URLCurrent
         global pageNumber
         global comicNumber
-        file = open(self.filename, 'a')
-        file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
-        file.close()
         
-        error.log("Checkpoint Saved: " + URLCurrent)
+        if(self.__callsSinceLastCheckpoint == self.__checkpointFrequency - 1):
+            file = open(self.filename, 'a')
+            file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
+            file.close()
+            
+            error.log("Checkpoint Saved: " + URLCurrent)
+            self.__callsSinceLastCheckpoint = 0
+        else:
+            self.__callsSinceLastCheckpoint = self.__callsSinceLastCheckpoint + 1
         
 def scrubURL(inlist):
     #should not be needed
@@ -138,7 +152,7 @@ def scrubTitle(inlist):
     #takes a string, removes and converts non-windows file system friendly chars OR unicod chars OR chars in the extanded ascii table, and returns the string
     t1 = list(inlist)
     #acceptableCharacters = " ()[]{}.-%#0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-    unacceptableCharacters = "\\/:*?\"<>|"
+    unacceptableCharacters = "\\/:*?\"<>|\t\n"
     
     j=0
     while (j<len(t1)):
@@ -153,8 +167,8 @@ def scrubTitle(inlist):
         return t2[0:80]
     return t2
 
-def saveTarget (targetURL, savepath, saveTitle, overrideExtension=None):
-    #assumes savepath is valid
+def saveTarget (targetURL, savePath, saveTitle, overrideExtension=None):
+    #assumes savePath is valid
     error.debug("Attempting to save = " + targetURL)
     
     extension = targetURL[targetURL.rfind('.'):len(targetURL)]
@@ -169,16 +183,16 @@ def saveTarget (targetURL, savepath, saveTitle, overrideExtension=None):
             targetObject = (urllib.request.urlopen(targetURL))
         except Exception as inst: #handles timeout I think
             error.log("Connection Fail: 1007 (non-fatal) =>" + '\tAttempt ' + str(i) + ":" + str(inst) + ":\t" + str(targetURL))
+            time.sleep(4)  
         if (i == 10): #FAILSAFE
             error.err("Picture Load Timeout: -1008 (fatal) =>\tFailed to load picture, Forcing system exit")
             exit(-1008)
-        time.sleep(4)  
         i = i+1
 
     try:
-        if (os.path.exists(savepath + "/" + saveTitle + extension)): #checks if file exists
-            error.log("File exists: 1012 (non-fatal) => \tOverwriting existing file: \t" + savepath + "/" + saveTitle + extension)
-        fileObject = open(savepath + "/" + saveTitle + extension, 'wb')
+        if (os.path.exists(savePath + "/" + saveTitle + extension)): #checks if file exists
+            error.log("File exists: 1012 (non-fatal) => \tOverwriting existing file: \t" + savePath + "/" + saveTitle + extension)
+        fileObject = open(savePath + "/" + saveTitle + extension, 'wb')
         fileObject.write(targetObject.read())
         fileObject.close()
     except Exception as inst:
@@ -187,6 +201,22 @@ def saveTarget (targetURL, savepath, saveTitle, overrideExtension=None):
     
     error.debug("target saved")
     targetObject.close()
+
+def saveTarget2 (targetURL, savePath, saveTitle, overrideExtension=None):
+    #Uses windows powershell to save a target
+    
+    error.debug("Attempting to save = " + targetURL)
+    error.debug("savePath:" + savePath, "saveTitle:" + saveTitle)
+    
+    extension = targetURL[targetURL.rfind('.'):len(targetURL)]
+    if (overrideExtension != None):
+        extension = overrideExtension
+    ''' #Sudo code for powershell command
+    Invoke-WebRequest $targetURL -OutFile (savePath + "test.jpg"); mv -literalpath (savePath + "test.jpg") (savePath + saveTitle + extension)
+    '''
+    subprocess.check_output(["powershell","Invoke-WebRequest \""+targetURL+"\" -OutFile \"" + savePath + "test.jpg" + "\"; mv -literalpath '" + savePath + "test.jpg" + "' '" + savePath + saveTitle + extension + "'"])
+    error.debug("target saved")
+    #TODO: Error Handling
 
 def looseDecoder(datastream, blocksize):
     #a loose webpage decoder, converts blocks of text at a time incase a couple characters are not decodable.
@@ -239,10 +269,10 @@ def loadWebpage(url):
     return datastream
 
 def loadWebpage2(url):
-    #an alternate way to load webpages via powershell?
+    #an alternate way to load webpages via powershell
     datastream = None
     i = 0
-    while ((i<=10) and (webpageObject == None)):
+    while ((i<=10) and (datastream == None)):
         try:
             error.debug("Loading "+url)
             datastream = str(    subprocess.check_output(["powershell","(Invoke-WebRequest \""+url+"\").Content"])    )
@@ -257,21 +287,6 @@ def loadWebpage2(url):
     error.debug("Webpage loaded")    
     return datastream
     
-def parseTitle(datastream):
-    #find the target title
-    #TODO: decide wheather to scrube targetTitle AND replace the forward slashes with a dot (for when titles are just the date)[probibly should make a function to do just that]
-    '''
-    Some HTML code
-    '''
-    #UserTweek
-    lineStart = "" #inclusive
-    lineEnd = "" #inclusive
-    targetStart = "" #non-inclusive
-    targetEnd = "" #non-inclusive
-    
-    substring = datastream[datastream.find(lineStart):datastream.find(lineEnd, datastream.find(lineStart))+len(lineEnd)]
-    return scrubTitle(   substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]   )
-
 def parseTarget(datastream):
     #find the target (picture) URL
     '''
@@ -286,26 +301,28 @@ def parseTarget(datastream):
     targetEnd = "" #non-inclusive
     
     targets = []
-    '''
-    if (blockStart == "" or blockEnd == ""):
-        block = datastream
-    else:
-        block = datastream[datastream.find(blockStart):datastream.find(blockEnd, datastream.find(blockStart))+len(blockEnd)]
-    '''
     if (blockStart == "" or blockEnd == ""):
         blockStart = lineStart
         blockEnd = lineEnd
     block = datastream[datastream.find(blockStart):datastream.find(blockEnd, datastream.find(blockStart))+len(blockEnd)]
-    while (block.find(lineStart) != -1):
+    error.debug("parseTarget - Block = " + str(block))
+    while ((lineStart in block) and (lineEnd in block)): #goes through block for each lineStart
         substring = block[block.find(lineStart):block.find(lineEnd, block.find(lineStart))+len(lineEnd)]
-        targets.append(scrubURL(   substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]   ))
+        error.debug("parseTarget - substring = " + str(substring))
+        
+        try: #skips substring if targetStart isn't found
+            targets.append(   substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]   )
+            #error.debug("parseTarget - Target Found")
+        except:
+            error.debug("praseTarget - Target not found")
+            
         block = block[block.find(lineEnd, block.find(lineStart))+len(lineEnd) : -1]
         error.debug("parseTarget - found linestart = " + str(block.find(lineStart) != -1), "parseTarget - len(block) = "+str(len(block)), "parseTarget - targets = "+str(targets))        
-
+        
     return targets
 
-def parseURLNext(datastream):
-    #finds URL of the next webpage (if needed)
+def parseTitle(datastream):
+    #find the target title
     '''
     Some HTML code
     '''
@@ -315,26 +332,63 @@ def parseURLNext(datastream):
     targetStart = "" #non-inclusive
     targetEnd = "" #non-inclusive
     
-    substring = datastream[datastream.find(lineStart):datastream.find(lineEnd, datastream.find(lineStart))+len(lineEnd)]
-    return scrubURL(   substring[substring.find(targetStart)+len(targetStart):substring.find(targetEnd, substring.find(targetStart)+len(targetStart))]   )    
+    try:
+        substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
+        return substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]
+    except:
+        error.debug("parseTitle => Title not found, returning \"\"")
+        return ""
+
+def parseDescription(datastream):
+    #Used to find (and return) the description of a target, returns "" is description not found
+    '''
+    Some HTML code
+    '''
+    #UserTweek
+    lineStart = "" #inclusive
+    lineEnd = "" #inclusive
+    targetStart = "" #non-inclusive
+    targetEnd = "" #non-inclusive
+    
+    try:
+        substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
+        return substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]
+    except:
+        error.debug("parseDescription => target not found, returning \"\"")
+        return ""
+
+def parseURLNext(datastream):
+    #finds URL of the next webpage
+    '''
+    Some HTML code
+    '''
+    #UserTweek
+    lineStart = "" #inclusive
+    lineEnd = "" #inclusive
+    targetStart = "" #non-inclusive
+    targetEnd = "" #non-inclusive
+    
+    try:
+        substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
+        return substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]
+    except:
+        error.debug("parseURLNext => Next URL not found")
+        return ""
     
 if __name__ == '__main__':
-    #some prgrame options
-    #UserTweek
-    savewebpage     = False
-    loopDelay       = 1 #time in seconds
-    pagesToScan     = 10000 #number of pages that this program will scan
-    debugMode       = False
-    useCheckpoints  = True
-    
-    #UserTweek
+    #These options need to be configured
     comicName       = "Comic Name"
     URLStart        = "Start URL" #The url to start from
     URLLast         = "End URL" #the last url in the comic series, to tell the program exactly where to stop
+    pagesToScan     = 9999 #Maximum number of pages that this program will scan in one go
+    debugMode       = False
+    useCheckpoints  = False
+    savewebpage     = False #saves the HTML of the webpage
     
-    cases           = {} #a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)
-    
+    #Other program options
+    cases           = {} #a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)    
     numberWidth     = 4 #the number of digits used to index comics
+    loopDelay       = 0 #time in seconds
     
     #Global variables for parsing webpages
     URLCurrent = URLStart
@@ -350,42 +404,39 @@ if __name__ == '__main__':
     names.close()
     '''
 
-    error = Debug(debugMode, "ComicArchiver.log") #Initialize the logging class
+    error = Debug(debugMode, "ComicArchiver.log") #Initialize the Logging Class
     error.log("Comic Archiver has started, Version: " + version + " ==================================================")    
     if (debugMode):
         error.log("Debug logging is enabled")
-        
-    special = SpecialCases(cases)
-    
+    special = SpecialCases(cases) #Initialize the SpecialCases Class
     if (useCheckpoints):
         error.log("Checkpoints Enabled")
-        check = Checkpoint("Checkpoint.txt")
+        check = Checkpoint("ComicArchiver-Checkpoint.csv",16) #Initialize the Checkpoint Class
         check.load()    
-
-    #create folder if it doesn't exsist
-    if not (os.path.exists("./saved/")):
+    if not (os.path.exists("./saved/")): #create folder if it doesn't exsist
         error.log("Creating directory:\t" + "./saved/")
         os.makedirs("./saved/")
     
     for i in range (0, pagesToScan): #used for loop as failsafe incase the exit condition doesn't work as inteneded
-        if (useCheckpoints and (pageNumber % 10 == 0)):
+        if (useCheckpoints):
             check.save()
-        
         datastream = loadWebpage(URLCurrent)
         error.log("processing webpage (p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "-t" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + ") = \t" + URLCurrent)
         
-        targetTitle = parseTitle(datastream)
+        #This is where the parse Functions are called
+        targetTitle = scrubTitle( parseTitle(datastream) )
         targetURL = parseTarget(datastream)
-        URLNext = parseURLNext(datastream)
+        for i in range(len(targetURL)):
+            targetURL[i] = scrubURL(targetURL[i])        
+        URLNext = scrubURL( parseURLNext(datastream) )
 
         special.trigger(URLCurrent)
 
         if (targetTitle == None):
             error.err("Missing Target: -1004")
             exit(-1004)
-        if (targetURL == None):
-            error.err("Missing TargetURL: -1006")
-            exit(-1006)
+        if (targetURL == []):
+            error.log("Missing TargetURLs: 1006 (non-fatal)")
             
         error.debug("targetTitle = "+targetTitle, "targetURL = "+str(targetURL), "URLNext = "+URLNext)
             
@@ -396,22 +447,20 @@ if __name__ == '__main__':
             saveTarget(j, "saved/", "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle) #saving comic image
             '''
             names = open("Names.csv",'a')
-            names.write(j + "," + j[j.find("comics")+7:len(j)] + "," + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle + j[j.rfind('.'):len(j)] +"\n")
+            names.write(j + "," + j[j.rfind("/"):len(j)] + "," + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle + j[j.rfind('.'):len(j)] +"\n")
             names.close()
             '''
             comicNumber = comicNumber + 1
 
-        #check for conclusion of comic
-        if URLCurrent == URLLast:
-            error.log("End condition detected, program exit")
-            exit(0)
-        
         error.debug("Finished processing webpage (" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + ")")        
-        #reset and reload
-        if URLNext == None:
+        if URLCurrent == URLLast: #check for conclusion of comic
+            error.log("End condition detected, program exit")
+            exit(0)        
+        
+        if URLNext == None: #TODO this check should happen with URLCurrent at the top
             error.err("Missing URLNext: -1005 (fatal) =>\tURLNext missing, end condition not detected, forceing system exit")
             exit(-1005)
-            
+        #reset and reload
         pageNumber = pageNumber + 1
         URLCurrent = URLNext
         URLNext = None
