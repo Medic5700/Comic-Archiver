@@ -9,8 +9,7 @@ import subprocess #used for saving stuff from the web using the system shell com
 version = "v4.8.3" #I know it's not proper coding to put a variable here, but here is where it makes sense?
 
 class Debug:
-    #Class for logging and debuging
-    #required to be initalized below the declaration for global variables
+    """Class for logging and debuging"""
     def __init__(self, debugMode, file="ComicArchiver.log"):
         self.__filename = file
         self.showDebug = debugMode #Bool
@@ -167,7 +166,7 @@ def scrubTitle(inlist):
         return t2[0:80]
     return t2
 
-def saveTarget (targetURL, savePath, saveTitle, overrideExtension=None):
+def saveTarget(targetURL, savePath, saveTitle, overrideExtension=None):
     #assumes savePath is valid
     error.debug("Attempting to save = " + targetURL)
     
@@ -202,7 +201,7 @@ def saveTarget (targetURL, savePath, saveTitle, overrideExtension=None):
     error.debug("target saved")
     targetObject.close()
 
-def saveTarget2 (targetURL, savePath, saveTitle, overrideExtension=None):
+def saveTarget2(targetURL, savePath, saveTitle, overrideExtension=None):
     #Uses windows powershell to save a target
     
     error.debug("Attempting to save = " + targetURL)
@@ -239,6 +238,7 @@ def looseDecoder(datastream, blocksize):
     return temp
 
 def loadWebpage(url):
+    """Takes a URL, returns the webpage contents as a string"""
     #gets and decodes webpage
     webpageObject = None
     datasteam = None
@@ -269,7 +269,9 @@ def loadWebpage(url):
     return datastream
 
 def loadWebpage2(url):
-    #an alternate way to load webpages via powershell
+    """Takes a URL, returns the webpage contents as a string
+    
+    Uses the system command line (powershell) instead of using urllib"""
     datastream = None
     i = 0
     while ((i<=10) and (datastream == None)):
@@ -322,7 +324,7 @@ def parseTarget(datastream):
     return targets
 
 def parseTitle(datastream):
-    #find the target title
+    """Takes in a string (webpage HTML), returns the title as a string"""
     '''
     Some HTML code
     '''
@@ -358,7 +360,7 @@ def parseDescription(datastream):
         return ""
 
 def parseURLNext(datastream):
-    #finds URL of the next webpage
+    """Takes in a string (webpage HTML), returns the URL representing the next button as a string"""
     '''
     Some HTML code
     '''
@@ -390,6 +392,12 @@ if __name__ == '__main__':
     numberWidth     = 4 #the number of digits used to index comics
     loopDelay       = 0 #time in seconds
     
+    
+    error = Debug(debugMode, "ComicArchiver.log") #Initialize the Logging Class
+    error.log("Comic Archiver has started, Version: " + version + " ==================================================")    
+    if (debugMode):
+        error.log("Debug logging is enabled")
+        
     #Global variables for parsing webpages
     URLCurrent = URLStart
     URLNext = None
@@ -404,10 +412,6 @@ if __name__ == '__main__':
     names.close()
     '''
 
-    error = Debug(debugMode, "ComicArchiver.log") #Initialize the Logging Class
-    error.log("Comic Archiver has started, Version: " + version + " ==================================================")    
-    if (debugMode):
-        error.log("Debug logging is enabled")
     special = SpecialCases(cases) #Initialize the SpecialCases Class
     if (useCheckpoints):
         error.log("Checkpoints Enabled")
