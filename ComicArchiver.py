@@ -6,7 +6,7 @@ import urllib.request #for url stuff
 import time #to sleep
 import os #for the filesystem manipulation
 import subprocess #used for saving stuff from the web using the system shell commands (if urllib fails)
-version = "v4.8.3" #I know it's not proper coding to put a variable here, but here is where it makes sense?
+version = "v4.8.4" #I know it's not proper coding to put a variable here, but here is where it makes sense?
 
 class Debug:
     """Class for logging and debuging"""
@@ -15,26 +15,32 @@ class Debug:
         self.showDebug = debugMode #Bool
         
     def __save(self, text):
+        """Function to save each log entry"""
         logfile = open(self.__filename, 'a')
         logfile.write(text)
         logfile.close()
 
     def log(self, text):
-        #pushes text to stdout AND to the log file
-        #For general logging, and non-fatal errors
+        """Takes string, pushes to stdout AND saves it to the log file
+        
+        For general logging, and non-fatal errors
+        """
         temp = "[" + time.asctime() + "] Log: " + text
         print(temp)
         self.__save(temp + "\n")
     
     def err(self, text):
-        #The same as log, but meant to be used for program crashing errors
+        """Takes string, pushes to stdout and saves it to the log file
+        
+        Mainly meant for non-recoverable errors that should cause the program to terminate"""
         temp = "[" + time.asctime() + "] ERR: " + text
         print(temp)
         self.__save(temp + "\n")        
     
     def debug(self, *args):
-        #pushes text to stdout AND to the log file, takes as many arguments as needed
-        #only shows up in log when debugging is enables
+        """takes n number of strings, pushes to stdout and log file
+        
+        only writes input to stdout/log file when showDebug is True"""
         if (self.showDebug):
             temp = "Debug:"
             for i in args:
@@ -43,19 +49,20 @@ class Debug:
             self.__save(temp)
     
 class SpecialCases:
-    #Class for handling special cases triggered by URLCurrent matching a key in the dictionary
+    """Class for handling special cases triggered by URLCurrent matching a key in the dictionary"""
+    
     def __init__(self, specialCases={}):
         assert (type(specialCases) == type({})),"SpecialCases -> __init__ -> arg1: specialCases needs to be a dictionary"
         self.__cases = specialCases
         
     def trigger(self, url):
-        #This determins if the current page is a special case
+        """takes URL, if URL in specialCases, executes code"""
         if (url in self.__cases):
             error.log("Special Case detected: " + url)
             self.__sandbox(self.__cases[url])
     
     def __sandbox(self, code):
-        #A sandbox to run exec in with limited access to the rest of the program, still not the most secure, but more secure then nothing
+        """Takes python code as string, runs code within a sandbox"""
         global URLCurrent
         global URLNext
         global targetTitle
@@ -74,7 +81,7 @@ class SpecialCases:
         #TODO: Assert variables are the right type, only change variables if they change  
     
 class Checkpoint:
-    #Class for loading and saving checkpoints
+    """Class for loading and saving checkpoints"""
     def __init__(self,name="Checkpoint.csv",checkpointFrequency=16):
         global URLCurrent
         global pageNumber
@@ -89,8 +96,10 @@ class Checkpoint:
             file.write("URLCurrent,pageNumber,comicNumber\n")
             file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
             file.close()
+        #TODO: should return true/false if checkpoint file is created?
         
     def load(self):
+        """Loads checkpoint"""
         global URLCurrent
         global pageNumber
         global comicNumber
@@ -116,6 +125,7 @@ class Checkpoint:
             error.err("Checkpoint file not formated correctly: " + self.filename)
         
     def save(self):
+        """Saves checkpoint, saves on intervales"""
         global URLCurrent
         global pageNumber
         global comicNumber
@@ -131,10 +141,10 @@ class Checkpoint:
             self.__callsSinceLastCheckpoint = self.__callsSinceLastCheckpoint + 1
         
 def scrubURL(inlist):
-    #should not be needed
-    #takes a string, removes non-windows file system friendly chars, and converts them, and returns the string
+    """Takes a URL as a string, returns a string that has unacceptableCharacters converted"""
     # http://stackoverflow.com/questions/1547899/which-characters-make-a-url-invalid
     unacceptableCharacters = " "
+    acceptableCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="
     t1 = list(inlist)
     
     j=0
@@ -148,7 +158,7 @@ def scrubURL(inlist):
     return t2
 
 def scrubTitle(inlist):
-    #takes a string, removes and converts non-windows file system friendly chars OR unicod chars OR chars in the extanded ascii table, and returns the string
+    """Takes a string, returns a string with windows file system unfriendly characters scrubbed"""
     t1 = list(inlist)
     #acceptableCharacters = " ()[]{}.-%#0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
     unacceptableCharacters = "\\/:*?\"<>|\t\n"
@@ -167,6 +177,7 @@ def scrubTitle(inlist):
     return t2
 
 def saveTarget(targetURL, savePath, saveTitle, overrideExtension=None):
+    """Takes a URL, filesystem savePath, and a file name (without file extention => Saves target of the URL at savePath as SaveTitle"""
     #assumes savePath is valid
     error.debug("Attempting to save = " + targetURL)
     
@@ -202,7 +213,9 @@ def saveTarget(targetURL, savePath, saveTitle, overrideExtension=None):
     targetObject.close()
 
 def saveTarget2(targetURL, savePath, saveTitle, overrideExtension=None):
-    #Uses windows powershell to save a target
+    """Takes a URL, filesystem savePath, and a file name (without file extention => Saves target of the URL at savePath as SaveTitle
+    
+    Uses windows powershell instead python's urllib"""
     
     error.debug("Attempting to save = " + targetURL)
     error.debug("savePath:" + savePath, "saveTitle:" + saveTitle)
@@ -218,8 +231,11 @@ def saveTarget2(targetURL, savePath, saveTitle, overrideExtension=None):
     #TODO: Error Handling
 
 def looseDecoder(datastream, blocksize):
-    #a loose webpage decoder, converts blocks of text at a time incase a couple characters are not decodable.
-    #may not fully decode webpage (IE: the very last characters of a webpage)
+    """Takes a webpage data, decodes webpage blocksize at a time, returns string containing webpage data
+    
+    Some webpages have a couple characters that can't be decoded
+    This decodes it in sections to avoid, enabling most of the webpage to be decoded
+    May not fully decode webpage"""
     assert (blocksize > 2)
     assert (blocksize%2==0)
     error.debug("looseDecoder - len(datastream) = "+str(len(datastream)))
@@ -239,7 +255,6 @@ def looseDecoder(datastream, blocksize):
 
 def loadWebpage(url):
     """Takes a URL, returns the webpage contents as a string"""
-    #gets and decodes webpage
     webpageObject = None
     datasteam = None
     error.debug("Attempting to load webpage " + url)
@@ -256,11 +271,9 @@ def loadWebpage(url):
             error.err("Coonection Timeout: -1001 (fatal) =>" + "\tTimeout while attempting to access webpage, Force System Exit")
             exit(-1001)        
         i = i+1
-        
     try:
         error.debug("Decoding webpage")
         datastream = looseDecoder(webpageObject.read(),4) #may help for webpages that seem to have one bad character
-        #supertemp = (webpageObject.read()).decode('utf-8')
     except Exception as inst:
         error.err("Decode Error: -1003 (fatal) =>" + "\tUTF-8 decode error, Force System Exit =>\t" + str(inst))
         exit(-1003)  
@@ -290,7 +303,9 @@ def loadWebpage2(url):
     return datastream
     
 def parseTarget(datastream):
-    #find the target (picture) URL
+    """Takes in a string (webpage HTML), returns the target URL in an array of strings
+    
+    Used to find the URL of a picture"""
     '''
     Some HTML code
     '''
@@ -324,7 +339,9 @@ def parseTarget(datastream):
     return targets
 
 def parseTitle(datastream):
-    """Takes in a string (webpage HTML), returns the title as a string"""
+    """Takes in a string (webpage HTML), returns the title as a string
+    
+    returns "" if title not found"""
     '''
     Some HTML code
     '''
@@ -342,7 +359,9 @@ def parseTitle(datastream):
         return ""
 
 def parseDescription(datastream):
-    #Used to find (and return) the description of a target, returns "" is description not found
+    """Takes in a string (webpage HTML), returns description as string
+    
+    returns "" if description not found"""
     '''
     Some HTML code
     '''
@@ -360,7 +379,9 @@ def parseDescription(datastream):
         return ""
 
 def parseURLNext(datastream):
-    """Takes in a string (webpage HTML), returns the URL representing the next button as a string"""
+    """Takes in a string (webpage HTML), returns the URL representing the next button as a string
+    
+    returns "" if next URL not found"""
     '''
     Some HTML code
     '''
