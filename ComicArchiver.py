@@ -301,42 +301,6 @@ def loadWebpage2(url):
         
     error.debug("Webpage loaded")    
     return datastream
-    
-def parseTarget(datastream):
-    """Takes in a string (webpage HTML), returns the target URL in an array of strings
-    
-    Used to find the URL of picture"""
-    '''
-    Some HTML code
-    '''
-    #UserTweek
-    blockStart = "" #inclusive, optional
-    blockEnd = "" #inclusive, optional
-    lineStart = "" #inclusive
-    lineEnd = "" #inclusive
-    targetStart = "" #non-inclusive
-    targetEnd = "" #non-inclusive
-    
-    targets = []
-    if (blockStart == "" or blockEnd == ""):
-        blockStart = lineStart
-        blockEnd = lineEnd
-    block = datastream[datastream.find(blockStart):datastream.find(blockEnd, datastream.find(blockStart))+len(blockEnd)]
-    error.debug("parseTarget - Block = " + str(block))
-    while ((lineStart in block) and (lineEnd in block)): #goes through block for each lineStart
-        substring = block[block.find(lineStart):block.find(lineEnd, block.find(lineStart))+len(lineEnd)]
-        error.debug("parseTarget - substring = " + str(substring))
-        
-        try: #skips substring if targetStart isn't found
-            targets.append(   substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]   )
-            #error.debug("parseTarget - Target Found")
-        except:
-            error.debug("praseTarget - Target not found")
-            
-        block = block[block.find(lineEnd, block.find(lineStart))+len(lineEnd) : -1]
-        error.debug("parseTarget - found linestart = " + str(block.find(lineStart) != -1), "parseTarget - len(block) = "+str(len(block)), "parseTarget - targets = "+str(targets))        
-        
-    return targets
 
 def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, blockStart = "", blockEnd = ""):
     """Takes in a string (webpage HTML), returns the target URL in an array of strings
@@ -363,69 +327,6 @@ def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, bloc
         
     return targets    
 
-def parseTitle(datastream, lineStart = "", lineEnd = "", targetStart = "", targetEnd = ""):
-    """Takes in a string (webpage HTML), returns the title as a string
-    
-    returns "" if title not found"""
-    '''
-    Some HTML code
-    '''
-    #UserTweek
-    if ((lineStart == "") and (lineEnd == "") and (targetStart == "") and (targetEnd == "")):
-        lineStart = "" #inclusive
-        lineEnd = "" #inclusive
-        targetStart = "" #non-inclusive
-        targetEnd = "" #non-inclusive
-    
-    try:
-        substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
-        return substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]
-    except:
-        error.debug("parseTitle => Title not found, returning \"\"")
-        return ""
-
-def parseDescription(datastream, lineStart = "", lineEnd = "", targetStart = "", targetEnd = ""):
-    """Takes in a string (webpage HTML), returns description as string
-    
-    returns "" if description not found"""
-    '''
-    Some HTML code
-    '''
-    #UserTweek
-    if ((lineStart == "") and (lineEnd == "") and (targetStart == "") and (targetEnd == "")):
-        lineStart = "" #inclusive
-        lineEnd = "" #inclusive
-        targetStart = "" #non-inclusive
-        targetEnd = "" #non-inclusive
-    
-    try:
-        substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
-        return substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]
-    except:
-        error.debug("parseDescription => target not found, returning \"\"")
-        return ""
-
-def parseURLNext(datastream, lineStart = "", lineEnd = "", targetStart = "", targetEnd = ""):
-    """Takes in a string (webpage HTML), returns the URL representing the next button as a string
-    
-    returns "" if next URL not found"""
-    '''
-    Some HTML code
-    '''
-    #UserTweek
-    if ((lineStart == "") and (lineEnd == "") and (targetStart == "") and (targetEnd == "")):
-        lineStart = "" #inclusive
-        lineEnd = "" #inclusive
-        targetStart = "" #non-inclusive
-        targetEnd = "" #non-inclusive
-    
-    try:
-        substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
-        return substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]
-    except:
-        error.debug("parseURLNext => Next URL not found")
-        return ""
-    
 def parseForString(datastream, lineStart, lineEnd, targetStart, targetEnd):
     """Takes in a string (webpage HTML) and search paramiters, returns a string found using the search paramiters
         
@@ -448,16 +349,16 @@ if __name__ == '__main__':
     fullArchive     = False #saves the aditional information from webpage
     
     #Other program options
-    cases           = {} #a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)    
+    cases           = {} #a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)
     numberWidth     = 4 #the number of digits used to index comics
     loopDelay       = 0 #time in seconds
-    
+    transactionFileName = "ComicArchiver-Transactions.csv"
     
     error = Debug(debugMode, "ComicArchiver.log") #Initialize the Logging Class
-    error.log("Comic Archiver has started, Version: " + version + " ==================================================")    
+    error.log("Comic Archiver has started, Version: " + version + " ==================================================")
     if (debugMode):
         error.log("Debug logging is enabled")
-        
+
     #Global variables for parsing webpages
     URLCurrent = URLStart
     URLNext = None
@@ -476,10 +377,18 @@ if __name__ == '__main__':
     if (useCheckpoints):
         error.log("Checkpoints Enabled")
         check = Checkpoint("ComicArchiver-Checkpoint.csv",16) #Initialize the Checkpoint Class
-        check.load()    
+        check.load()
+
     if not (os.path.exists("./saved/")): #create folder if it doesn't exsist
         error.log("Creating directory:\t" + "./saved/")
         os.makedirs("./saved/")
+    
+    if (fullArchive):
+        if (not os.path.exists(transactionFileName)):
+            error.log(transactionFileName + " not found, creating file")
+            file = open(transactionFileName,'w')
+            file.write("Page URL, PageNumber, ComicNumber, Target URL, Original File Name, Saved File Title\n")
+            file.close()
     
     for i in range (0, pagesToScan): #used for loop as failsafe incase the exit condition doesn't work as inteneded
         if (useCheckpoints):
@@ -489,32 +398,43 @@ if __name__ == '__main__':
         
         #This is where the parse Functions are called
         #UserTweak
-        '''
-        targetTitle = scrubTitle( parseTitle(datastream) )
-        targetURL = parseTarget(datastream)
-        for i in range(len(targetURL)):
-            targetURL[i] = scrubURL(targetURL[i])        
-        URLNext = scrubURL( parseURLNext(datastream) )
+        ''' #title
+        Some reference HTML
         '''
         targetTitle = scrubTitle( parseForString(datastream,
                                                  "",
                                                  "",
                                                  "",
                                                  "") )
+        ''' #next URL
+        Some reference HTML
+        '''
+        URLNext = scrubURL( parseForString(datastream,
+                                           "",
+                                           "",
+                                           "",
+                                           "") )        
+        ''' #target
+        Some reference HTML
+        '''
         targetURL = praseForTargets(datastream,
-                                   "",
-                                   "",
-                                   "",
-                                   "",
-                                   "",
-                                   "")
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    "")
         for i in range(len(targetURL)):
             targetURL[i] = scrubURL(targetURL[i])
-        URLNext = scrubURL( parseURLNext(datastream,
-                                         "",
-                                         "",
-                                         "",
-                                         "") )
+        if (fullArchive):
+            ''' #target discription
+            Some reference HTML
+            '''
+            targetDiscription = parseForString(datastream,
+                                               "",
+                                               "",
+                                               "",
+                                               "")
 
         special.trigger(URLCurrent)
 
@@ -525,12 +445,27 @@ if __name__ == '__main__':
             error.log("Missing TargetURLs: 1006 (non-fatal)")
             
         error.debug("targetTitle = "+targetTitle, "targetURL = "+str(targetURL), "URLNext = "+URLNext)
-            
-        #saves the target(s)
+        
         if (fullArchive):
-            saveTarget(URLCurrent, "saved/", "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle, ".html") #saveing html page        
+            saveTarget(URLCurrent, "saved", "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle, ".html") #saveing html page
+            fileTransaction = open(transactionFileName,'a')
+            fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ URLCurrent +","+ URLCurrent +","+ "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle + ".html" + "\n")
+            fileTransaction.close()
+            
+            if (targetDiscription != ""):
+                if (os.path.exists("saved/" + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle + ".txt")):
+                    error.log("File exists, overwriting: " + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle + ".txt")
+                fileDiscription = open("saved/" + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle + ".txt", 'w')
+                fileDiscription.write(targetDiscription + "\n")
+                fileDiscription.close()
+        
+        #saves the target(s)
         for j in targetURL:
-            saveTarget(j, "saved/", "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle) #saving comic image
+            saveTarget(j, "saved", "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle) #saving comic image
+            if (fullArchive):
+                fileTransaction = open(transactionFileName,'a')
+                fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ j +","+ j[j.rfind("/"):len(j)] +","+ "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle + j[j.rfind('.'):len(j)] + "\n")
+                fileTransaction.close()                
             '''
             names = open("Names.csv",'a')
             names.write(j + "," + j[j.rfind("/"):len(j)] + "," + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle + j[j.rfind('.'):len(j)] +"\n")
