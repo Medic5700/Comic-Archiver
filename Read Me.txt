@@ -9,6 +9,8 @@ Running:
 running the main program will autogenerate the "ComicArchiver.log" and a "saved" folder to store the targets
 
 TODO:
+-add getting started to ReadMe.txt
+-code cleanup and restructering to eliminate redundent code
 -perhaps make an option to load a config file instead of having to manually alter source code?
 -scrub "http://" from endcase detection?
 -improve sandbox code execution, more failsafes

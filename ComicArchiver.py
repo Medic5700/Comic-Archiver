@@ -305,7 +305,7 @@ def loadWebpage2(url):
 def parseTarget(datastream):
     """Takes in a string (webpage HTML), returns the target URL in an array of strings
     
-    Used to find the URL of a picture"""
+    Used to find the URL of picture"""
     '''
     Some HTML code
     '''
@@ -338,7 +338,32 @@ def parseTarget(datastream):
         
     return targets
 
-def parseTitle(datastream):
+def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, blockStart = "", blockEnd = ""):
+    """Takes in a string (webpage HTML), returns the target URL in an array of strings
+    
+    Used to find the URL of picture"""
+    targets = []
+    if (blockStart == "" or blockEnd == ""):
+        blockStart = lineStart
+        blockEnd = lineEnd
+    block = datastream[datastream.find(blockStart):datastream.find(blockEnd, datastream.find(blockStart))+len(blockEnd)]
+    error.debug("parseTarget - Block = " + str(block))
+    while ((lineStart in block) and (lineEnd in block)): #goes through block for each lineStart
+        substring = block[block.find(lineStart):block.find(lineEnd, block.find(lineStart))+len(lineEnd)]
+        error.debug("parseTarget - substring = " + str(substring))
+        
+        try: #skips substring if targetStart isn't found
+            targets.append(   substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]   )
+            #error.debug("parseTarget - Target Found")
+        except:
+            error.debug("praseTarget - Target not found")
+            
+        block = block[block.find(lineEnd, block.find(lineStart))+len(lineEnd) : -1]
+        error.debug("parseTarget - found linestart = " + str(block.find(lineStart) != -1), "parseTarget - len(block) = "+str(len(block)), "parseTarget - targets = "+str(targets))        
+        
+    return targets    
+
+def parseTitle(datastream, lineStart = "", lineEnd = "", targetStart = "", targetEnd = ""):
     """Takes in a string (webpage HTML), returns the title as a string
     
     returns "" if title not found"""
@@ -346,10 +371,11 @@ def parseTitle(datastream):
     Some HTML code
     '''
     #UserTweek
-    lineStart = "" #inclusive
-    lineEnd = "" #inclusive
-    targetStart = "" #non-inclusive
-    targetEnd = "" #non-inclusive
+    if ((lineStart == "") and (lineEnd == "") and (targetStart == "") and (targetEnd == "")):
+        lineStart = "" #inclusive
+        lineEnd = "" #inclusive
+        targetStart = "" #non-inclusive
+        targetEnd = "" #non-inclusive
     
     try:
         substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
@@ -358,7 +384,7 @@ def parseTitle(datastream):
         error.debug("parseTitle => Title not found, returning \"\"")
         return ""
 
-def parseDescription(datastream):
+def parseDescription(datastream, lineStart = "", lineEnd = "", targetStart = "", targetEnd = ""):
     """Takes in a string (webpage HTML), returns description as string
     
     returns "" if description not found"""
@@ -366,10 +392,11 @@ def parseDescription(datastream):
     Some HTML code
     '''
     #UserTweek
-    lineStart = "" #inclusive
-    lineEnd = "" #inclusive
-    targetStart = "" #non-inclusive
-    targetEnd = "" #non-inclusive
+    if ((lineStart == "") and (lineEnd == "") and (targetStart == "") and (targetEnd == "")):
+        lineStart = "" #inclusive
+        lineEnd = "" #inclusive
+        targetStart = "" #non-inclusive
+        targetEnd = "" #non-inclusive
     
     try:
         substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
@@ -378,7 +405,7 @@ def parseDescription(datastream):
         error.debug("parseDescription => target not found, returning \"\"")
         return ""
 
-def parseURLNext(datastream):
+def parseURLNext(datastream, lineStart = "", lineEnd = "", targetStart = "", targetEnd = ""):
     """Takes in a string (webpage HTML), returns the URL representing the next button as a string
     
     returns "" if next URL not found"""
@@ -386,10 +413,11 @@ def parseURLNext(datastream):
     Some HTML code
     '''
     #UserTweek
-    lineStart = "" #inclusive
-    lineEnd = "" #inclusive
-    targetStart = "" #non-inclusive
-    targetEnd = "" #non-inclusive
+    if ((lineStart == "") and (lineEnd == "") and (targetStart == "") and (targetEnd == "")):
+        lineStart = "" #inclusive
+        lineEnd = "" #inclusive
+        targetStart = "" #non-inclusive
+        targetEnd = "" #non-inclusive
     
     try:
         substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
@@ -397,6 +425,17 @@ def parseURLNext(datastream):
     except:
         error.debug("parseURLNext => Next URL not found")
         return ""
+    
+def parseForString(datastream, lineStart, lineEnd, targetStart, targetEnd):
+    """Takes in a string (webpage HTML) and search paramiters, returns a string found using the search paramiters
+        
+    returns "" if next URL not found"""
+    try:
+        substring = datastream[datastream.index(lineStart):datastream.index(lineEnd, datastream.index(lineStart))+len(lineEnd)]
+        return substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]
+    except:
+        error.debug("parseForString => Search Failed")
+        return ""    
     
 if __name__ == '__main__':
     #These options need to be configured
@@ -406,7 +445,7 @@ if __name__ == '__main__':
     pagesToScan     = 9999 #Maximum number of pages that this program will scan in one go
     debugMode       = False
     useCheckpoints  = False
-    savewebpage     = False #saves the HTML of the webpage
+    fullArchive     = False #saves the aditional information from webpage
     
     #Other program options
     cases           = {} #a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)    
@@ -449,11 +488,33 @@ if __name__ == '__main__':
         error.log("processing webpage (p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "-t" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + ") = \t" + URLCurrent)
         
         #This is where the parse Functions are called
+        #UserTweak
+        '''
         targetTitle = scrubTitle( parseTitle(datastream) )
         targetURL = parseTarget(datastream)
         for i in range(len(targetURL)):
             targetURL[i] = scrubURL(targetURL[i])        
         URLNext = scrubURL( parseURLNext(datastream) )
+        '''
+        targetTitle = scrubTitle( parseForString(datastream,
+                                                 "",
+                                                 "",
+                                                 "",
+                                                 "") )
+        targetURL = praseForTargets(datastream,
+                                   "",
+                                   "",
+                                   "",
+                                   "",
+                                   "",
+                                   "")
+        for i in range(len(targetURL)):
+            targetURL[i] = scrubURL(targetURL[i])
+        URLNext = scrubURL( parseURLNext(datastream,
+                                         "",
+                                         "",
+                                         "",
+                                         "") )
 
         special.trigger(URLCurrent)
 
@@ -466,7 +527,7 @@ if __name__ == '__main__':
         error.debug("targetTitle = "+targetTitle, "targetURL = "+str(targetURL), "URLNext = "+URLNext)
             
         #saves the target(s)
-        if savewebpage == True:
+        if (fullArchive):
             saveTarget(URLCurrent, "saved/", "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle, ".html") #saveing html page        
         for j in targetURL:
             saveTarget(j, "saved/", "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle) #saving comic image
