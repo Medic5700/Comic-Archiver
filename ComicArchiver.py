@@ -148,48 +148,46 @@ class Checkpoint:
         else:
             self.__callsSinceLastCheckpoint = self.__callsSinceLastCheckpoint + 1
         
-def scrubURL(inlist):
-    """Takes a URL as a string, returns a string that has unacceptableCharacters converted"""
-    # http://stackoverflow.com/questions/1547899/which-characters-make-a-url-invalid
-    unacceptableCharacters = " "
-    acceptableCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="
-    t1 = list(inlist)
-    
-    j=0
-    while (j<len(t1)):
-        if (unacceptableCharacters.find(str(t1[j]))!=-1):
-            t1.insert(j+1,"%" + str(ord(t1[j])))
-            t1.pop(j)
-            error.log("scrubURL Warning: needed to replace a character in URL: " + inlist + "\n")
-        j=j+1
-    t2 = "".join(t1)    
-    return t2
-
-def scrubTitle(inlist):
-    """Takes a string, returns a string with windows file system unfriendly characters scrubbed"""
-    t1 = list(inlist)
-    acceptableCharacters = " ()[]{}.-%#0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-    unacceptableCharacters = "\\/:*?\"<>|\t\n"
-    
-    j=0
-    while (j<len(t1)):
-        if (unacceptableCharacters.find(str(t1[j]))!=-1):
-            t1.insert(j+1,"%" + str(ord(t1[j])))
-            t1.pop(j)
-            error.debug("scrubTitle: Warning: needed to replace a character in target Title: " + inlist)
-        j=j+1
-    t2 = "".join(t1)
-    
-    if (len(t2) > 80):
-        return t2[0:80]
-    return t2
-
-def scrubPath(path, usage):
+def scrubPath(usage, path):
     # http://stackoverflow.com/questions/1547899/which-characters-make-a-url-invalid
     acceptableURLCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=" + "%"
     # https://msdn.microsoft.com/en-ca/library/windows/desktop/aa365247(v=vs.85).aspx#naming_conventions
     acceptableWindowsCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" + "`~!@#$%^&()-=_+[]{};',." #forbidden characters = "<>:/|?*" + "\\\""
+    acceptableWindowsCharactersFailSafe = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" + "~%()-_[]{}."
     
+    output = ""
+    dropChar = False
+    maxLength = None
+    whitelist = ""
+    
+    if (usage == "windows"):
+        whitelist = acceptableWindowsCharacters
+        maxLength = 64
+    elif (usage == "failsafe"):
+        whitelist = acceptableWindowsCharactersFailSafe
+        dropChar = True
+        maxLength = 16
+    elif (usage == "web"):
+        whitelist = acceptableURLCharacters
+    elif (usage == "ascii"):
+        for i in range(0,256):
+            whitelist += chr(i)
+    else:
+        error.err("scrubPath => argument 2 (usage) invalid: " + str(usage))
+        exit(-1015)
+    
+    for i in path:
+        if (i in whitelist):
+            output += i
+        else:
+            if ((not dropChar) and (usage == "ascii")):
+                output += ascii(i)
+            if (not dropChar):
+                output += "%" + str(ord(i))
+    
+    if (maxLength != None):
+        output = output[0:min(maxLength,len(output))]
+    return output
 
 def saveTarget(targetURL, savePath, saveTitle, overrideExtension=None):
     """Takes a URL, filesystem savePath, and a file name (without file extention => Saves target of the URL at savePath as SaveTitle"""
@@ -410,23 +408,23 @@ if __name__ == '__main__':
         ''' #title
         Some reference HTML
         '''
-        targetTitle = scrubTitle( parseForString(datastream,
-                                                 "",
-                                                 "",
-                                                 "",
-                                                 "") )
+        targetTitle = scrubPath("windows", parseForString(datastream,
+                                                          "",
+                                                          "",
+                                                          "",
+                                                          "") )
         ''' #next URL
         Some reference HTML
         '''
-        URLNext = scrubURL( parseForString(datastream,
-                                           "",
-                                           "",
-                                           "",
-                                           "") )        
+        URLNext = scrubPath("web", parseForString(datastream,
+                                                  "",
+                                                  "",
+                                                  "",
+                                                  "") )        
         ''' #target
         Some reference HTML
         '''
-        targetURL = praseForTargets(datastream,
+        targetURL = parseForTargets(datastream,
                                     "",
                                     "",
                                     "",
@@ -434,7 +432,7 @@ if __name__ == '__main__':
                                     "",
                                     "")
         for i in range(len(targetURL)):
-            targetURL[i] = scrubURL(targetURL[i])
+            targetURL[i] = scrubPath("web", targetURL[i])
         if (fullArchive):
             ''' #target discription
             Some reference HTML
