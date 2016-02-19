@@ -17,7 +17,15 @@ class Debug:
     def __save(self, text):
         """Function to save each log entry"""
         logfile = open(self.__filename, 'a')
-        logfile.write(text)
+        try:
+            logfile.write(text)
+        except:
+            self.err("Error Occured in Error Logging Function: Attempting to report previous error")
+            for i in text:
+                try:
+                    logfile.write(i)
+                except:
+                    logfile.write("[ERROR]")
         logfile.close()
 
     def log(self, text):
@@ -160,7 +168,7 @@ def scrubURL(inlist):
 def scrubTitle(inlist):
     """Takes a string, returns a string with windows file system unfriendly characters scrubbed"""
     t1 = list(inlist)
-    #acceptableCharacters = " ()[]{}.-%#0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    acceptableCharacters = " ()[]{}.-%#0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
     unacceptableCharacters = "\\/:*?\"<>|\t\n"
     
     j=0
@@ -175,6 +183,13 @@ def scrubTitle(inlist):
     if (len(t2) > 80):
         return t2[0:80]
     return t2
+
+def scrubPath(path, usage):
+    # http://stackoverflow.com/questions/1547899/which-characters-make-a-url-invalid
+    acceptableURLCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=" + "%"
+    # https://msdn.microsoft.com/en-ca/library/windows/desktop/aa365247(v=vs.85).aspx#naming_conventions
+    acceptableWindowsCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" + "`~!@#$%^&()-=_+[]{};',." #forbidden characters = "<>:/|?*" + "\\\""
+    
 
 def saveTarget(targetURL, savePath, saveTitle, overrideExtension=None):
     """Takes a URL, filesystem savePath, and a file name (without file extention => Saves target of the URL at savePath as SaveTitle"""
@@ -366,12 +381,6 @@ if __name__ == '__main__':
     targetURL = None
     comicNumber = 1
     pageNumber = 1
-    
-    '''
-    names = open("Names.csv",'w')
-    names.write("URL,NAME,TITLE\n")
-    names.close()
-    '''
 
     special = SpecialCases(cases) #Initialize the SpecialCases Class
     if (useCheckpoints):
@@ -466,11 +475,6 @@ if __name__ == '__main__':
                 fileTransaction = open(transactionFileName,'a')
                 fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ j +","+ j[j.rfind("/"):len(j)] +","+ "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle + j[j.rfind('.'):len(j)] + "\n")
                 fileTransaction.close()                
-            '''
-            names = open("Names.csv",'a')
-            names.write(j + "," + j[j.rfind("/"):len(j)] + "," + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle + j[j.rfind('.'):len(j)] +"\n")
-            names.close()
-            '''
             comicNumber = comicNumber + 1
 
         error.debug("Finished processing webpage (" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + ")")        
