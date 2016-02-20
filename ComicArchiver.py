@@ -6,7 +6,7 @@ import urllib.request #for url stuff
 import time #to sleep
 import os #for the filesystem manipulation
 import subprocess #used for saving stuff from the web using the system shell commands (if urllib fails)
-version = "v4.8.4" #I know it's not proper coding to put a variable here, but here is where it makes sense?
+version = "v4.8.5" #I know it's not proper coding to put a variable here, but here is where it makes sense?
 
 class Debug:
     """Class for logging and debuging"""
@@ -148,15 +148,15 @@ class Checkpoint:
         else:
             self.__callsSinceLastCheckpoint = self.__callsSinceLastCheckpoint + 1
         
-def scrubPath(usage, path):
+def scrubPath(usage, path, dropChar = False):
+    """Takes a string, parses it based on usage (windows, web, failsafe, ascii), removes/escapes characters"""
     # http://stackoverflow.com/questions/1547899/which-characters-make-a-url-invalid
     acceptableURLCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=" + "%"
     # https://msdn.microsoft.com/en-ca/library/windows/desktop/aa365247(v=vs.85).aspx#naming_conventions
-    acceptableWindowsCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" + "`~!@#$%^&()-=_+[]{};',." #forbidden characters = "<>:/|?*" + "\\\""
-    acceptableWindowsCharactersFailSafe = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" + "~%()-_[]{}."
+    acceptableWindowsCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 " + "`~!@#$%^&()-=_+[]{};',." #forbidden characters = "<>:/|?*" + "\\\""
+    acceptableWindowsCharactersFailSafe = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 " + "~%()-_[]{}."
     
     output = ""
-    dropChar = False
     maxLength = None
     whitelist = ""
     
@@ -165,7 +165,6 @@ def scrubPath(usage, path):
         maxLength = 64
     elif (usage == "failsafe"):
         whitelist = acceptableWindowsCharactersFailSafe
-        dropChar = True
         maxLength = 16
     elif (usage == "web"):
         whitelist = acceptableURLCharacters
@@ -331,7 +330,6 @@ def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, bloc
         
         try: #skips substring if targetStart isn't found
             targets.append(   substring[substring.index(targetStart)+len(targetStart):substring.index(targetEnd, substring.index(targetStart)+len(targetStart))]   )
-            #error.debug("parseTarget - Target Found")
         except:
             error.debug("praseTarget - Target not found")
             
