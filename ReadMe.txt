@@ -17,6 +17,7 @@ TODO:
 -replace subprocess.check_output with subprocess.run # https://docs.python.org/3.5/library/subprocess.html
 
 BUGS:
+-saveTarget2 can't overwrite files, not proper error handling
 -urllib.request.urlopen() can hang, causing program to hang
 -checkpoints save on pages that are ABOUT to be processed, not pages that HAVE been processed
 -checkpoint is saved immediatly after loading a checkpoint

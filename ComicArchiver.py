@@ -138,6 +138,7 @@ class Checkpoint:
         global pageNumber
         global comicNumber
         
+        error.debug("Attempting to save checkpoint")
         if(self.__callsSinceLastCheckpoint == self.__checkpointFrequency - 1):
             file = open(self.filename, 'a')
             file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
@@ -162,7 +163,7 @@ def scrubPath(usage, path, dropChar = False):
     
     if (usage == "windows"):
         whitelist = acceptableWindowsCharacters
-        maxLength = 64
+        maxLength = 32
     elif (usage == "failsafe"):
         whitelist = acceptableWindowsCharactersFailSafe
         maxLength = 16
@@ -238,7 +239,7 @@ def saveTarget2(targetURL, savePath, saveTitle, overrideExtension=None):
     ''' #Sudo code for powershell command
     Invoke-WebRequest $targetURL -OutFile (savePath + "test.jpg"); mv -literalpath (savePath + "test.jpg") (savePath + saveTitle + extension)
     '''
-    subprocess.check_output(["powershell","Invoke-WebRequest \""+targetURL+"\" -OutFile \"" + savePath + "test.jpg" + "\"; mv -literalpath '" + savePath + "test.jpg" + "' '" + savePath + saveTitle + extension + "'"])
+    subprocess.check_output(["powershell","Invoke-WebRequest \""+targetURL+"\" -OutFile \"" + savePath + "/" + "test.jpg" + "\"; mv -literalpath '" + savePath + "/" + "test.jpg" + "' '" + savePath + "/" + saveTitle + extension + "'"])
     error.debug("target saved")
     #TODO: Error Handling
 
@@ -251,8 +252,9 @@ def looseDecoder(datastream, blocksize):
     assert (blocksize > 2)
     assert (blocksize%2==0)
     error.debug("looseDecoder - len(datastream) = "+str(len(datastream)))
-    temp = ""
     errorCounter = 0
+    
+    temp = ""
     for i in range(0,int(len(datastream)/blocksize)-1):
         try:
             temp += datastream[i*blocksize:(i+1)*blocksize].decode('utf-8')
@@ -260,7 +262,6 @@ def looseDecoder(datastream, blocksize):
             errorCounter = errorCounter + 1
             for j in range(0,blocksize):
                 temp += " "
-            error.debug("looaseDecoder - decode warning, substituting block")
     if (errorCounter > 0):
         error.log("LooseDecoder Warning: 1011 (non-fatal) =>\tCould not decode part of webpage, substituting ("+str(errorCounter * blocksize)+ ") blanks")
     return temp
