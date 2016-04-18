@@ -261,9 +261,12 @@ def saveTarget2(targetURL, savePath, saveTitle, overrideExtension=None):
     ''' #Sudo code for powershell command
     Invoke-WebRequest $targetURL -OutFile (savePath + "test.jpg"); mv -literalpath (savePath + "test.jpg") (savePath + saveTitle + extension)
     '''
-    subprocess.check_output(["powershell","Invoke-WebRequest \""+targetURL+"\" -OutFile \"" + savePath + "/" + "test.jpg" + "\"; mv -literalpath '" + savePath + "/" + "test.jpg" + "' '" + savePath + "/" + saveTitle + extension + "'"])
+    try:
+        subprocess.check_output(["powershell","Invoke-WebRequest \""+targetURL+"\" -OutFile \"" + savePath + "/" + "test.jpg" + "\"; mv -literalpath '" + savePath + "/" + "test.jpg" + "' '" + savePath + "/" + saveTitle + extension + "'"])
+    except Exception as inst:
+        error.err("saveTarget2: (-1015) Error Unable to save target via powershell => " + str(inst))
+        exit(-1015)
     error.debug("target saved")
-    #TODO: Error Handling
 
 def looseDecoder(datastream, blocksize):
     """Takes a webpage data, decodes webpage blocksize at a time, returns string containing webpage data
