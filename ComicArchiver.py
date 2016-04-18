@@ -67,7 +67,11 @@ class SpecialCases:
         """takes URL, if URL in specialCases, executes code"""
         if (url in self.__cases):
             error.log("Special Case detected: " + url)
-            self.__sandbox(self.__cases[url])
+            try:
+                self.__sandbox(self.__cases[url])
+            except:
+                error.err("SpecialCases->trigger->__sandbox : (-1014) Error while executeing special case")
+                exit(-1014)
     
     def __sandbox(self, code):
         """Takes python code as string, runs code within a sandbox"""
@@ -82,15 +86,29 @@ class SpecialCases:
         sandboxScope = {"__builtins__":None,"URLCurrent":URLCurrent,"URLNext":URLNext,"targetTitle":targetTitle,"targetURL":targetURL,"comicNumber":comicNumber,"pageNumber":pageNumber}
         error.log("Executing code: \"" + code + "\"")
         exec(code, sandboxScope)
-        URLCurrent = sandboxScope['URLCurrent']
-        URLNext = sandboxScope['URLNext']
-        targetTitle = sandboxScope['targetTitle']
-        targetURL = sandboxScope['targetURL']
-        comicNumber = sandboxScope['comicNumber']
-        pageNumber = sandboxScope['pageNumber']
+        
+        #only changes variables if they have changed
+        if (URLCurrent != sandboxScope['URLCurrent']):
+            error.debug("changing URLCurrent: " + str(URLCurrent) + " -> " + str(sandboxScope['URLCurrent']))
+            URLCurrent = sandboxScope['URLCurrent']
+        if (URLNext != sandboxScope['URLNext']):
+            error.debug("changing URLNext: " + str(URLNext) + " -> " + str(sandboxScope['URLNext']))
+            URLNext = sandboxScope['URLNext']
+        if (targetTitle != sandboxScope['targetTitle']):
+            error.debug("changing targetTitle: " + str(targetTitle) + " -> " + str(sandboxScope['targetTitle']))
+            targetTitle = sandboxScope['targetTitle']
+        if (targetURL != sandboxScope['targetURL']):
+            error.debug("changing targetURL: " + str(targetURL) + " -> " + str(sandboxScope['targetURL']))
+            targetURL = sandboxScope['targetURL']
+        if (comicNumber != sandboxScope['comicNumber']):
+            error.debug("changing comicNumber: " + str(comicNumber) + " -> " + str(sandboxScope['comicNumber']))
+            comicNumber = sandboxScope['comicNumber']
+        if (pageNumber != sandboxScope['pageNumber']):
+            error.debug("changing pageNumber: " + str(pageNumber) + " -> " + str(sandboxScope['pageNumber']))
+            pageNumber = sandboxScope['pageNumber']
         
         error.debug("After executing exec command","targetTitle = "+str(targetTitle), "targetURL = "+str(targetURL), "URLNext = "+str(URLNext), "URLCurrent = "+str(URLCurrent))
-        #TODO: Assert variables are the right type, only change variables if they change
+        #TODO: Assert variables are the right type, only change variables if they change  
     
 class Checkpoint:
     """Class for loading and saving checkpoints"""
