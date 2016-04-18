@@ -75,18 +75,22 @@ class SpecialCases:
         global URLNext
         global targetTitle
         global targetURL
-        error.debug("Before executing exec command","targetTitle = "+targetTitle, "targetURL = "+str(targetURL), "URLNext = "+URLNext, "URLCurrent = "+URLCurrent)
+        global comicNumber
+        global pageNumber
+        error.debug("Before executing exec command","targetTitle = "+str(targetTitle), "targetURL = "+str(targetURL), "URLNext = "+str(URLNext), "URLCurrent = "+str(URLCurrent))
         
-        sandboxScope = {"__builtins__":None,"URLCurrent":URLCurrent,"URLNext":URLNext,"targetTitle":targetTitle,"targetURL":targetURL}
+        sandboxScope = {"__builtins__":None,"URLCurrent":URLCurrent,"URLNext":URLNext,"targetTitle":targetTitle,"targetURL":targetURL,"comicNumber":comicNumber,"pageNumber":pageNumber}
         error.log("Executing code: \"" + code + "\"")
         exec(code, sandboxScope)
         URLCurrent = sandboxScope['URLCurrent']
         URLNext = sandboxScope['URLNext']
         targetTitle = sandboxScope['targetTitle']
         targetURL = sandboxScope['targetURL']
+        comicNumber = sandboxScope['comicNumber']
+        pageNumber = sandboxScope['pageNumber']
         
-        error.debug("After executing exec command","targetTitle = "+targetTitle, "targetURL = "+str(targetURL), "URLNext = "+URLNext, "URLCurrent = "+URLCurrent)
-        #TODO: Assert variables are the right type, only change variables if they change  
+        error.debug("After executing exec command","targetTitle = "+str(targetTitle), "targetURL = "+str(targetURL), "URLNext = "+str(URLNext), "URLCurrent = "+str(URLCurrent))
+        #TODO: Assert variables are the right type, only change variables if they change
     
 class Checkpoint:
     """Class for loading and saving checkpoints"""
