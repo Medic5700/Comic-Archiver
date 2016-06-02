@@ -478,28 +478,28 @@ if __name__ == '__main__':
         error.debug("targetTitle = "+targetTitle, "targetURL = "+str(targetURL), "URLNext = "+URLNext)
         
         if (fullArchive):
-            saveTarget(URLCurrent, "saved", "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle, ".html") #saveing html page
+            saveTarget(URLCurrent, "saved", "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle, ".html") #saveing html page
             fileTransaction = open(transactionFileName,'a')
-            fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ URLCurrent +","+ URLCurrent +","+ "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle + ".html" + "\n")
+            fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ URLCurrent +","+ URLCurrent +","+ "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".html" + "\n")
             fileTransaction.close()
             
             if (targetDiscription != ""):
-                if (os.path.exists("saved/" + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle + ".txt")):
-                    error.log("File exists, overwriting: " + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle + ".txt")
-                fileDiscription = open("saved/" + "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "-p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "]) " + targetTitle + ".txt", 'w')
+                if (os.path.exists("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".txt")):
+                    error.log("File exists, overwriting: " + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".txt")
+                fileDiscription = open("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".txt", 'w')
                 fileDiscription.write(targetDiscription + "\n")
                 fileDiscription.close()
         
         #saves the target(s)
         for j in targetURL:
-            saveTarget(j, "saved", "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle) #saving comic image
+            saveTarget(j, "saved", "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "]) " + targetTitle) #saving comic image
             if (fullArchive):
                 fileTransaction = open(transactionFileName,'a')
-                fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ j +","+ j[j.rfind("/"):len(j)] +","+ "(" + comicName + " [" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + "]) " + targetTitle + j[j.rfind('.'):len(j)] + "\n")
+                fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ j +","+ j[j.rfind("/"):len(j)] +","+ "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "]) " + targetTitle + j[j.rfind('.'):len(j)] + "\n")
                 fileTransaction.close()                
             comicNumber = comicNumber + 1
 
-        error.debug("Finished processing webpage (" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + ")")        
+        error.debug("Finished processing webpage (" + str(pageNumber).zfill(numberWidth) + ")")        
         if URLCurrent == URLLast: #check for conclusion of comic
             error.log("End condition detected, program exit")
             exit(0)        
