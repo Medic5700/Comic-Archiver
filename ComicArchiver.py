@@ -359,8 +359,13 @@ def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, bloc
         except:
             error.debug("praseTarget - Target not found")
             
-        block = block[block.find(lineEnd, block.find(lineStart))+len(lineEnd) : -1]
-        error.debug("parseTarget - found linestart = " + str(block.find(lineStart) != -1), "parseTarget - len(block) = "+str(len(block)), "parseTarget - targets = "+str(targets))        
+        block = block[block.find(lineEnd, block.find(lineStart))+len(lineEnd) : ]
+        error.debug("parseTarget - found linestart = " + str(lineStart in block), 
+                    "parseTarget - found lineEnd = " + str(lineEnd in block), 
+                    "parseTarget - len(block) = "+str(len(block)), 
+                    "praseTarget - reamining block = " + str(block),
+                    "parseTarget - targets = "+str(targets)
+                    )      
         
     return targets    
 
