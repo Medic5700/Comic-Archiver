@@ -87,7 +87,9 @@ class SpecialCases:
                     "targetTitle = " + str(targetTitle), 
                     "targetURL = " + str(targetURL), 
                     "URLNext = " + str(URLNext), 
-                    "URLCurrent = " + str(URLCurrent)
+                    "URLCurrent = " + str(URLCurrent),
+                    "comicNumber = " + str(comicNumber),
+                    "pageNumber = " + str(pageNumber)
                     )
         
         sandboxScope = {"__builtins__":None, "URLCurrent":URLCurrent, "URLNext":URLNext, "targetTitle":targetTitle, "targetURL":targetURL, "comicNumber":comicNumber, "pageNumber":pageNumber}
@@ -97,30 +99,49 @@ class SpecialCases:
         #only changes variables if they have changed
         if (URLCurrent != sandboxScope['URLCurrent']):
             error.debug("changing URLCurrent: " + str(URLCurrent) + " -> " + str(sandboxScope['URLCurrent']))
-            URLCurrent = sandboxScope['URLCurrent']
+            if not isinstance(sandboxScope['URLCurrent'], str):
+                error.debug("could not change URLCurrent, incorrect type")
+            else:
+                URLCurrent = sandboxScope['URLCurrent']
         if (URLNext != sandboxScope['URLNext']):
             error.debug("changing URLNext: " + str(URLNext) + " -> " + str(sandboxScope['URLNext']))
-            URLNext = sandboxScope['URLNext']
+            if not isinstance(sandboxScope['URLNext'], str):
+                error.debug("could not change URLNext, incorrect type")
+            else:
+                URLNext = sandboxScope['URLNext']
         if (targetTitle != sandboxScope['targetTitle']):
             error.debug("changing targetTitle: " + str(targetTitle) + " -> " + str(sandboxScope['targetTitle']))
-            targetTitle = sandboxScope['targetTitle']
+            if not isinstance(sandboxScope['targetTitle'], str):
+                error.debug("could not change targetTitle, incorrect type")
+            else:
+                targetTitle = sandboxScope['targetTitle']
         if (targetURL != sandboxScope['targetURL']):
             error.debug("changing targetURL: " + str(targetURL) + " -> " + str(sandboxScope['targetURL']))
-            targetURL = sandboxScope['targetURL']
+            if (type(targetURL) != type([])):
+                error.debug("could not change targetURL, incorrect type")
+            else:
+                targetURL = sandboxScope['targetURL']
         if (comicNumber != sandboxScope['comicNumber']):
             error.debug("changing comicNumber: " + str(comicNumber) + " -> " + str(sandboxScope['comicNumber']))
-            comicNumber = sandboxScope['comicNumber']
+            if not isinstance(sandboxScope['comicNumber'], int):
+                error.debug("could not change comicNumber, incorrect type")
+            else:
+                comicNumber = sandboxScope['comicNumber']
         if (pageNumber != sandboxScope['pageNumber']):
             error.debug("changing pageNumber: " + str(pageNumber) + " -> " + str(sandboxScope['pageNumber']))
-            pageNumber = sandboxScope['pageNumber']
+            if not isinstance(sandboxScope['pageNumber'], int):
+                error.debug("could not change pageNumber, incorrect type")
+            else:
+                pageNumber = sandboxScope['pageNumber']
         
         error.debug("After executing exec command", 
                     "targetTitle = " + str(targetTitle), 
                     "targetURL = " + str(targetURL), 
                     "URLNext = " + str(URLNext), 
-                    "URLCurrent = " + str(URLCurrent)
-                    )
-        #TODO: Assert variables are the right type, only change variables if they change  
+                    "URLCurrent = " + str(URLCurrent),
+                    "comicNumber = " + str(comicNumber),
+                    "pageNumber = " + str(pageNumber)
+                    ) 
     
 class Checkpoint:
     """Class for loading and saving checkpoints"""
