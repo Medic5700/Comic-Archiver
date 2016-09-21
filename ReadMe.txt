@@ -8,16 +8,3 @@ Most of the recoding will be in the __main__ declaration
 Running:
 running the main program will autogenerate the "ComicArchiver.log" and a "saved" folder to store the targets
 
-TODO:
--add getting started to ReadMe.txt
--perhaps make an option to load a config file instead of having to manually alter source code?
--improve sandbox code execution, more failsafes
--if debug.err invoked, print last x lines of debug dialog, even if debuging is disabled
--build error handling into savetarget2 function
--replace subprocess.check_output with subprocess.run # https://docs.python.org/3.5/library/subprocess.html
-
-BUGS:
--saveTarget2 can't overwrite files, not proper error handling
--urllib.request.urlopen() can hang, causing program to hang
--checkpoints save on pages that are ABOUT to be processed, not pages that HAVE been processed
--checkpoint is saved immediatly after loading a checkpoint
