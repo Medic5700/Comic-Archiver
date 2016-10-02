@@ -6,16 +6,17 @@ import urllib.request #for url stuff
 import time #to sleep
 import os #for the filesystem manipulation
 import subprocess #used for saving stuff from the web using the system shell commands (if urllib fails)
-version = "v4.8.5" #I know it's not proper coding to put a variable here, but here is where it makes sense?
+version = "v4.8.5"
 
 class Debug:
     """Class for logging and debuging"""
-    def __init__(self, debugMode, file="ComicArchiver.log"):
+    
+    def __init__(self, debugMode, file = "ComicArchiver.log"):
         self.__filename = file
         self.showDebug = debugMode #Bool
         
     def __save(self, text):
-        """Function to save each log entry"""
+        """Saves text to file as a log entry"""
         logfile = open(self.__filename, 'a')
         try:
             logfile.write(text)
@@ -48,7 +49,7 @@ class Debug:
     def debug(self, *args):
         """takes n number of strings, pushes to stdout and log file
         
-        only writes input to stdout/log file when showDebug is True"""
+        only writes input to stdout/log file when self.showDebug is True (debugMode was set to true when initialized)"""
         if (self.showDebug):
             temp = "Debug:"
             for i in args:
@@ -59,7 +60,7 @@ class Debug:
 class SpecialCases:
     """Class for handling special cases triggered by URLCurrent matching a key in the dictionary"""
     
-    def __init__(self, specialCases={}):
+    def __init__(self, specialCases = {}):
         assert (type(specialCases) == type({})),"SpecialCases -> __init__ -> arg1: specialCases needs to be a dictionary"
         
         self.__cases = specialCases
@@ -92,7 +93,14 @@ class SpecialCases:
                     "pageNumber = " + str(pageNumber)
                     )
         
-        sandboxScope = {"__builtins__":None, "URLCurrent":URLCurrent, "URLNext":URLNext, "targetTitle":targetTitle, "targetURL":targetURL, "comicNumber":comicNumber, "pageNumber":pageNumber}
+        sandboxScope = {"__builtins__":None, 
+                        "URLCurrent":URLCurrent, 
+                        "URLNext":URLNext, 
+                        "targetTitle":targetTitle, 
+                        "targetURL":targetURL, 
+                        "comicNumber":comicNumber, 
+                        "pageNumber":pageNumber
+                        }
         error.log("Executing code: \"" + code + "\"")
         exec(code, sandboxScope)
         
@@ -145,7 +153,8 @@ class SpecialCases:
     
 class Checkpoint:
     """Class for loading and saving checkpoints"""
-    def __init__(self,name="Checkpoint.csv",checkpointFrequency=16):
+    
+    def __init__(self, name = "Checkpoint.csv", checkpointFrequency = 16):
         global URLCurrent
         global pageNumber
         global comicNumber        
@@ -160,10 +169,9 @@ class Checkpoint:
             file.write("URLCurrent,pageNumber,comicNumber\n")
             file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
             file.close()
-        #TODO: should return true/false if checkpoint file is created?
         
     def load(self):
-        """Loads checkpoint"""
+        """Loads checkpoint from file, sets URLCurrent, pageNumber, ComicNumber"""
         global URLCurrent
         global pageNumber
         global comicNumber
@@ -189,13 +197,13 @@ class Checkpoint:
             error.err("Checkpoint file not formated correctly: " + self.filename)
         
     def save(self):
-        """Saves checkpoint, saves on intervales"""
+        """Saves checkpoint, saves (URLCurrent, pageNumber, comicNumber) on every checkpointFrequency"""
         global URLCurrent
         global pageNumber
         global comicNumber
         
         error.debug("Attempting to save checkpoint")
-        if(self.__callsSinceLastCheckpoint == self.__checkpointFrequency - 1):
+        if (self.__callsSinceLastCheckpoint == self.__checkpointFrequency - 1):
             file = open(self.filename, 'a')
             file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
             file.close()
@@ -245,8 +253,8 @@ def scrubPath(usage, path, dropChar = False):
         output = output[0 : min(maxLength, len(output))]
     return output
 
-def saveTarget(targetURL, savePath, saveTitle, overrideExtension=None):
-    """Takes a URL, filesystem savePath, and a file name (without file extention => Saves target of the URL at savePath as SaveTitle"""
+def saveTarget(targetURL, savePath, saveTitle, overrideExtension = None):
+    """Takes a URL, filesystem savePath, and a file name (without file extention) => Saves target of the URL at savePath as SaveTitle"""
     #assumes savePath is valid
     error.debug("Attempting to save = " + targetURL)
     
@@ -281,10 +289,11 @@ def saveTarget(targetURL, savePath, saveTitle, overrideExtension=None):
     error.debug("target saved")
     targetObject.close()
 
-def saveTarget2(targetURL, savePath, saveTitle, overrideExtension=None):
+def saveTarget2(targetURL, savePath, saveTitle, overrideExtension = None):
     """Takes a URL, filesystem savePath, and a file name (without file extention => Saves target of the URL at savePath as SaveTitle
     
-    Uses windows powershell instead python's urllib"""
+    Uses windows powershell instead python's urllib
+    """
     
     error.debug("Attempting to save = " + targetURL)
     error.debug("savePath:" + savePath, "saveTitle:" + saveTitle)
@@ -292,22 +301,26 @@ def saveTarget2(targetURL, savePath, saveTitle, overrideExtension=None):
     extension = targetURL[targetURL.rfind('.') : len(targetURL)]
     if (overrideExtension != None):
         extension = overrideExtension
+        
     ''' #Sudo code for powershell command
-    Invoke-WebRequest $targetURL -OutFile (savePath + "test.jpg"); mv -literalpath (savePath + "test.jpg") (savePath + saveTitle + extension)
+    Invoke-WebRequest $targetURL -OutFile (savePath + "test.jpg"); 
+    mv -literalpath (savePath + "test.jpg") (savePath + saveTitle + extension)
     '''
     try:
         subprocess.check_output(["powershell","Invoke-WebRequest \"" + targetURL + "\" -OutFile \"" + savePath + "/" + "test.jpg" + "\"; mv -literalpath '" + savePath + "/" + "test.jpg" + "' '" + savePath + "/" + saveTitle + extension + "'"])
     except Exception as inst:
         error.err("saveTarget2: (-1015) Error Unable to save target via powershell => " + str(inst))
         exit(-1015)
+        
     error.debug("target saved")
 
 def looseDecoder(datastream, blocksize):
     """Takes a webpage data, decodes webpage blocksize at a time, returns string containing webpage data
     
     Some webpages have a couple characters that can't be decoded
-    This decodes it in sections to avoid, enabling most of the webpage to be decoded
-    May not fully decode webpage"""
+    This decodes it in sections to avoid that, enabling most of the webpage to be decoded
+    May not fully decode webpage
+    """
     assert (blocksize > 2)
     assert (blocksize%2 == 0)
     error.debug("looseDecoder - len(datastream) = " + str(len(datastream)))
@@ -357,7 +370,8 @@ def loadWebpage(url):
 def loadWebpage2(url):
     """Takes a URL, returns the webpage contents as a string
     
-    Uses the system command line (powershell) instead of using urllib"""
+    Uses the system command line (powershell) instead of using urllib
+    """
     datastream = None
     i = 0
     while ((i<=10) and (datastream == None)):
@@ -376,9 +390,15 @@ def loadWebpage2(url):
     return datastream
 
 def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, blockStart = "", blockEnd = ""):
-    """Takes in a string (webpage HTML), returns the target URL in an array of strings
+    """Takes in a string (webpage HTML), and search peramiters (lineStart, lineEnd, etc), returns an array of targets as strings
     
-    Used to find the URL of picture"""
+    (Mainly used to find the URL of picture(s))
+    
+    
+    
+    
+    
+    """
     targets = []
     if (blockStart == "" or blockEnd == ""):
         blockStart = lineStart
@@ -405,9 +425,9 @@ def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, bloc
     return targets    
 
 def parseForString(datastream, lineStart, lineEnd, targetStart, targetEnd):
-    """Takes in a string (webpage HTML) and search paramiters, returns a string found using the search paramiters
+    """Takes in a string (webpage HTML) and search paramiters (lineStart, lineEnd, etc), returns a string found
         
-    returns "" if target is not found"""
+    returns the empty string "" if target is not found"""
     try:
         substring = datastream[datastream.index(lineStart) : datastream.index(lineEnd, datastream.index(lineStart)) + len(lineEnd)]
         return substring[substring.index(targetStart) + len(targetStart) : substring.index(targetEnd, substring.index(targetStart) + len(targetStart))]
@@ -546,13 +566,14 @@ if __name__ == '__main__':
             comicNumber = comicNumber + 1
 
         error.debug("Finished processing webpage (" + str(pageNumber).zfill(numberWidth) + ")")        
-        if URLCurrent == URLLast: #check for conclusion of comic
+        if (URLCurrent == URLLast): #check for conclusion of comic
             error.log("End condition detected, program exit")
             exit(0)        
         
-        if URLNext == None: #TODO this check should happen with URLCurrent at the top
+        if (URLNext == None): #TODO this check should happen with URLCurrent at the top
             error.err("Missing URLNext: -1005 (fatal) =>\tURLNext missing, end condition not detected, forceing system exit")
             exit(-1005)
+        
         #reset and reload
         pageNumber = pageNumber + 1
         URLCurrent = URLNext
