@@ -503,7 +503,7 @@ if __name__ == '__main__':
         '''
         URLNext = scrubPath("web", parseForString(datastream,
                                                   '',
-                                                  ''
+                                                  '', # lineEnd
                                                   '',
                                                   '')
                             )        
