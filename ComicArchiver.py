@@ -493,30 +493,30 @@ if __name__ == '__main__':
         Some reference HTML
         '''
         targetTitle = scrubPath("windows", parseForString(datastream,
-                                                          '',
-                                                          '',
-                                                          '',
-                                                          '')
+                                                          '', # lineStart
+                                                          '', # lineEnd
+                                                          '', # targetStart
+                                                          '') # targetEnd
                                 )
         ''' #next URL
         Some reference HTML
         '''
         URLNext = scrubPath("web", parseForString(datastream,
-                                                  '',
+                                                  '', # lineStart
                                                   '', # lineEnd
-                                                  '',
-                                                  '')
+                                                  '', # targetStart
+                                                  '') # targetEnd
                             )        
         ''' #target
         Some reference HTML
         '''
         targetURL = parseForTargets(datastream,
-                                    '',
-                                    '',
-                                    '',
-                                    '',
-                                    '',
-                                    '')
+                                    '', # lineStart
+                                    '', # lineEnd
+                                    '', # targetStart
+                                    '', # targetEnd
+                                    '', # blockStart
+                                    '') # blockEnd
         for i in range(len(targetURL)):
             targetURL[i] = scrubPath("web", targetURL[i])
             
