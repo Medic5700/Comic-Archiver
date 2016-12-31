@@ -552,8 +552,8 @@ if __name__ == '__main__':
             if (targetDiscription != ""):
                 if (os.path.exists("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".txt")):
                     error.log("File exists, overwriting: " + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".txt")
-                fileDiscription = open("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".txt", 'w')
-                fileDiscription.write(targetDiscription + "\n")
+                fileDiscription = open("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".txt", 'wb') #notice this is writing in binary mode
+                fileDiscription.write((targetDiscription + "\n").encode('UTF-8')) #encoding it in UTF-8
                 fileDiscription.close()
         
         #saves the target(s)
