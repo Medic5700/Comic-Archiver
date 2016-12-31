@@ -247,7 +247,7 @@ def scrubPath(usage, path, dropChar = False):
             if ((not dropChar) and (usage == "ascii")):
                 output += ascii(i)
             if (not dropChar):
-                output += "%" + str(ord(i))
+                output += "%" + hex(ord(i) // 16)[2:].upper() + hex (ord(i) % 16)[2:].upper() #Percent-Encoding
     
     if (maxLength != None):
         output = output[0 : min(maxLength, len(output))]
