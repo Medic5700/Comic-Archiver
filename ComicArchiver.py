@@ -493,30 +493,33 @@ if __name__ == '__main__':
         Some reference HTML
         '''
         targetTitle = scrubPath("windows", parseForString(datastream,
-                                                          '', # lineStart
-                                                          '', # lineEnd
-                                                          '', # targetStart
-                                                          '') # targetEnd
+                                                          '', # lineStart   inclusive
+                                                          '', # lineEnd     inclusive
+                                                          '', # targetStart non-inclusive
+                                                          '') # targetEnd   non-inclusive
                                 )
+        
         ''' #next URL
         Some reference HTML
         '''
         URLNext = scrubPath("web", parseForString(datastream,
-                                                  '', # lineStart
-                                                  '', # lineEnd
-                                                  '', # targetStart
-                                                  '') # targetEnd
-                            )        
+                                                  '', # lineStart   inclusive
+                                                  '', # lineEnd     inclusive
+                                                  '', # targetStart non-inclusive
+                                                  '') # targetEnd   non-inclusive
+                            )
+        
         ''' #target
         Some reference HTML
         '''
         targetURL = parseForTargets(datastream,
-                                    '', # lineStart
-                                    '', # lineEnd
-                                    '', # targetStart
-                                    '', # targetEnd
-                                    '', # blockStart
-                                    '') # blockEnd
+                                    '', # lineStart   inclusive
+                                    '', # lineEnd     inclusive
+                                    '', # targetStart non-inclusive
+                                    '', # targetEnd   non-inclusive
+                                    '', # blockStart  inclusive     optional
+                                    '') # blockEnd    inclusive     optional
+        
         for i in range(len(targetURL)):
             targetURL[i] = scrubPath("web", targetURL[i])
             
@@ -525,15 +528,15 @@ if __name__ == '__main__':
             Some reference HTML
             '''
             targetDiscription = parseForString(datastream,
-                                               '',
-                                               '',
-                                               '',
-                                               '')
+                                               '', # lineStart   inclusive
+                                               '', # lineEnd     inclusive
+                                               '', # targetStart non-inclusive
+                                               '') # targetEnd   non-inclusive
 
         special.trigger(URLCurrent)
 
         if (targetTitle == None):
-            error.err("Missing Target: -1004")
+            error.err("Missing TargetTitle: -1004")
             exit(-1004)
         if (targetURL == []):
             error.log("Missing TargetURLs: 1006 (non-fatal)")
