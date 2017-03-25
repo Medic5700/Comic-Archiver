@@ -459,7 +459,7 @@ if __name__ == '__main__':
     #Global variables for parsing webpages
     URLCurrent = URLStart
     URLNext = None
-    targetTitle = None
+    targetTitle = ""
     targetURL = None
     comicNumber = 1
     pageNumber = 1
@@ -534,37 +534,38 @@ if __name__ == '__main__':
                                                '') # targetEnd   non-inclusive
 
         special.trigger(URLCurrent)
-
+        
+        #sanity checks
         if (targetTitle == None):
             error.err("Missing TargetTitle: -1004")
             exit(-1004)
         if (targetURL == []):
             error.log("Missing TargetURLs: 1006 (non-fatal)")
             
-        error.debug("targetTitle = " + targetTitle, 
-                    "targetURL = " + str(targetURL), 
+        error.debug("targetTitle = " + str(targetTitle),
+                    "targetURL = " + str(targetURL),
                     "URLNext = " + URLNext
                     )
         
         if (fullArchive):
-            saveTarget(URLCurrent, "saved", "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle, ".html") #saveing html page
+            saveTarget(URLCurrent, "saved", "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle), ".html") #saveing html page
             fileTransaction = open(transactionFileName,'a')
-            fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ URLCurrent +","+ URLCurrent +","+ "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".html" + "\n")
+            fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ URLCurrent +","+ URLCurrent +","+ "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".html" + "\n")
             fileTransaction.close()
             
             if (targetDiscription != ""):
-                if (os.path.exists("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".txt")):
-                    error.log("File exists, overwriting: " + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".txt")
-                fileDiscription = open("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + targetTitle + ".txt", 'wb') #notice this is writing in binary mode
+                if (os.path.exists("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".txt")):
+                    error.log("File exists, overwriting: " + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".txt")
+                fileDiscription = open("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".txt", 'wb') #notice this is writing in binary mode
                 fileDiscription.write((targetDiscription + "\n").encode('UTF-8')) #encoding it in UTF-8
                 fileDiscription.close()
         
         #saves the target(s)
         for j in targetURL:
-            saveTarget(j, "saved", "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "]) " + targetTitle) #saving comic image
+            saveTarget(j, "saved", "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "]) " + str(targetTitle)) #saving comic image
             if (fullArchive):
                 fileTransaction = open(transactionFileName, 'a')
-                fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ j +","+ j[j.rfind("/"):len(j)] + "," + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "]) " + targetTitle + j[j.rfind('.'):len(j)] + "\n")
+                fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ j +","+ j[j.rfind("/"):len(j)] + "," + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "]) " + str(targetTitle) + j[j.rfind('.'):len(j)] + "\n")
                 fileTransaction.close()                
             comicNumber = comicNumber + 1
 
@@ -581,7 +582,7 @@ if __name__ == '__main__':
         pageNumber = pageNumber + 1
         URLCurrent = URLNext
         URLNext = None
-        targetTitle = None
+        targetTitle = ""
         targetURL = None       
         time.sleep(loopDelay)
 
