@@ -435,6 +435,20 @@ def parseForString(datastream, lineStart, lineEnd, targetStart, targetEnd):
         error.debug("parseForString => Search Failed")
         return ""    
     
+def parseForLine(datastream, target):
+    """Takes in a string (webpage HTML) and target, and returns the entire line the target was found on
+    
+    returns the empty string "" if target is not found"""
+    #TODO needs more testing
+    try:
+        targetLocation = datastream.index(target)
+        lineStart = datastream.rindex("\n", 0, targetLocation)
+        lineEnd = datastream.index("\n", targetLocation, len(datastream))
+        return datastream[lineStart:lineEnd]
+    except:
+        error.debug("parseForLine => Search Failed")
+        return ""
+    
 if __name__ == '__main__':
     #These options need to be configured
     comicName       = "Comic Name"
