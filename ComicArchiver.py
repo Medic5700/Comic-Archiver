@@ -38,13 +38,16 @@ class Debug:
         print(temp)
         self.__save(temp + "\n")
     
-    def err(self, text):
+    def err(self, *text):
         """Takes string, pushes to stdout and saves it to the log file
         
         Mainly meant for non-recoverable errors that should cause the program to terminate"""
-        temp = "[" + time.asctime() + "] ERR: " + text
-        print(temp)
-        self.__save(temp + "\n")        
+        timestamp = "[" + time.asctime() + "] ERR:"
+        temp = ""
+        for i in text:
+            temp += "\t" + str(i) + "\n"
+        print(timestamp + temp)
+        self.__save(timestamp + temp + "\n")        
     
     def debug(self, *args):
         """takes n number of strings, pushes to stdout and log file
