@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 '''
 Author: Medic5700
 Purpose: To archive various webcomics in a local copy
@@ -11,7 +12,7 @@ version = "v4.8.5"
 class Debug:
     """Class for logging and debuging"""
     
-    def __init__(self, debugMode, file = "ComicArchiver.log"):
+    def __init__(self, debugMode, file = "Debug.log"):
         self.__filename = file
         self.showDebug = debugMode #Bool
         
@@ -89,11 +90,11 @@ class SpecialCases:
         
         error.debug("Before executing exec command", 
                     "targetTitle = " + str(targetTitle), 
-                    "targetURL = " + str(targetURL), 
-                    "URLNext = " + str(URLNext), 
-                    "URLCurrent = " + str(URLCurrent),
+                    "targetURL   = " + str(targetURL), 
+                    "URLNext     = " + str(URLNext), 
+                    "URLCurrent  = " + str(URLCurrent),
                     "comicNumber = " + str(comicNumber),
-                    "pageNumber = " + str(pageNumber)
+                    "pageNumber  = " + str(pageNumber)
                     )
         
         sandboxScope = {"__builtins__":None, 
@@ -147,11 +148,11 @@ class SpecialCases:
         
         error.debug("After executing exec command", 
                     "targetTitle = " + str(targetTitle), 
-                    "targetURL = " + str(targetURL), 
-                    "URLNext = " + str(URLNext), 
-                    "URLCurrent = " + str(URLCurrent),
+                    "targetURL   = " + str(targetURL), 
+                    "URLNext     = " + str(URLNext), 
+                    "URLCurrent  = " + str(URLCurrent),
                     "comicNumber = " + str(comicNumber),
-                    "pageNumber = " + str(pageNumber)
+                    "pageNumber  = " + str(pageNumber)
                     ) 
     
 class Checkpoint:
@@ -261,9 +262,9 @@ def saveTarget(targetURL, savePath, saveTitle, overrideExtension = None):
     #assumes savePath is valid
     error.debug("Attempting to save = " + targetURL)
     
-    extension = targetURL[targetURL.rfind('.') : len(targetURL)]
+    fileExtension = targetURL[targetURL.rfind('.') : len(targetURL)]
     if (overrideExtension != None):
-        extension = overrideExtension
+        fileExtension = overrideExtension
     
     targetObject = None        
     i = 0
@@ -280,13 +281,13 @@ def saveTarget(targetURL, savePath, saveTitle, overrideExtension = None):
         i = i+1
 
     try:
-        if (os.path.exists(savePath + "/" + saveTitle + extension)): #checks if file exists
-            error.log("File exists: 1012 (non-fatal) => \tOverwriting existing file: \t" + savePath + "/" + saveTitle + extension)
-        fileObject = open(savePath + "/" + saveTitle + extension, 'wb')
+        if (os.path.exists(savePath + "/" + saveTitle + fileExtension)): #checks if file exists
+            error.log("File exists: 1012 (non-fatal) => \tOverwriting existing file: \t" + savePath + "/" + saveTitle + fileExtension)
+        fileObject = open(savePath + "/" + saveTitle + fileExtension, 'wb')
         fileObject.write(targetObject.read())
         fileObject.close()
     except Exception as inst:
-        error.err("Picture failed to save: -1010 (fatal) =>\tSaveTitle:" + saveTitle + "\tExtension:" + extension + "\tError =>\t" + str(inst))
+        error.err("Picture failed to save: -1010 (fatal) =>\tSaveTitle:" + saveTitle + "\tExtension:" + fileExtension + "\tError =>\t" + str(inst))
         exit(-1010)
     
     error.debug("target saved")
@@ -301,16 +302,28 @@ def saveTarget2(targetURL, savePath, saveTitle, overrideExtension = None):
     error.debug("Attempting to save = " + targetURL)
     error.debug("savePath:" + savePath, "saveTitle:" + saveTitle)
     
-    extension = targetURL[targetURL.rfind('.') : len(targetURL)]
+    fileExtension = targetURL[targetURL.rfind('.') : len(targetURL)]
     if (overrideExtension != None):
-        extension = overrideExtension
+        fileExtension = overrideExtension
         
+    if (os.path.exists(savePath + "/" + saveTitle + fileExtension)): #checks if file exists
+        error.log("File exists: 1012 (non-fatal) => \tskipping existing file: \t" + savePath + "/" + saveTitle + fileExtension)
+        return    
     ''' #Sudo code for powershell command
     Invoke-WebRequest $targetURL -OutFile (savePath + "test.jpg"); 
-    mv -literalpath (savePath + "test.jpg") (savePath + saveTitle + extension)
+    mv -literalpath (savePath + "test.jpg") (savePath + saveTitle + fileExtension)
     '''
     try:
-        subprocess.check_output(["powershell","Invoke-WebRequest \"" + targetURL + "\" -OutFile \"" + savePath + "/" + "test.jpg" + "\"; mv -literalpath '" + savePath + "/" + "test.jpg" + "' '" + savePath + "/" + saveTitle + extension + "'"])
+        #subprocess.check_output(["powershell","Invoke-WebRequest \"" + targetURL + "\" -OutFile \"" + savePath + "/" + "test.jpg" + "\"; mv -literalpath '" + savePath + "/" + "test.jpg" + "' '" + savePath + "/" + saveTitle + fileExtension + "'"])
+        process = subprocess.run(["powershell","Invoke-WebRequest \"" + targetURL + "\" -OutFile \"" + savePath + "/" + "test.jpg" + "\"; mv -literalpath '" + savePath + "/" + "test.jpg" + "' '" + savePath + "/" + saveTitle + fileExtension + "'"],
+                       stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        if (process.stderr != b''):
+            error.err("saveTarget2: (-1016) Error Unable to save target via powershell",
+                      process.args,
+                      process.stdout.decode("UTF-8"),
+                      process.stderr.decode("UTF-8")
+                      )
+            exit(-1016)
     except Exception as inst:
         error.err("saveTarget2: (-1015) Error Unable to save target via powershell => " + str(inst))
         exit(-1015)
@@ -463,7 +476,13 @@ if __name__ == '__main__':
     fullArchive     = False #saves the aditional information from webpage
     
     #Other program options
-    cases           = {} #a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)
+    cases           = {} 
+    '''a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)
+    IE:
+    cases           = {"www.exampleURL1.com": "targetURL = [\"www.exampleURL1.com/example.jpg\"]",
+                       "www.exampleURL2.com": "targetURL = [\"www.exampleURL2.com/example.jpg\"]"
+                        }
+    '''
     numberWidth     = 4 #the number of digits used to index comics
     loopDelay       = 0 #time in seconds
     transactionFileName = "ComicArchiver-Transactions.csv"
