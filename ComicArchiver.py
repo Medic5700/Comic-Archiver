@@ -409,17 +409,18 @@ def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, bloc
     """Takes in a string (webpage HTML), and search peramiters (lineStart, lineEnd, etc), returns an array of targets as strings
     
     (Mainly used to find the URL of picture(s))
-    
-    
-    
-    
-    
+    lineStart    - inclusive
+    lineEnd      - inclusive
+    targetStart  - non-inclusive
+    targetEnd    - non-inclusive
+    blockStart   - inclusive, optional
+    blockEnd     - inclusive, optional, starts search after blockStart
     """
     targets = []
     if (blockStart == "" or blockEnd == ""):
         blockStart = lineStart
         blockEnd = lineEnd
-    block = datastream[datastream.find(blockStart) : datastream.find(blockEnd, datastream.find(blockStart)) + len(blockEnd)]
+    block = datastream[datastream.find(blockStart) : datastream.find(blockEnd, datastream.find(blockStart) + len(blockStart)) + len(blockEnd)]
     error.debug("parseTarget - Block = " + str(block))
     while ((lineStart in block) and (lineEnd in block)): #goes through block for each lineStart
         substring = block[block.find(lineStart) : block.find(lineEnd, block.find(lineStart)) + len(lineEnd)]
@@ -430,7 +431,11 @@ def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, bloc
         except:
             error.debug("praseTarget - Target not found")
             
-        block = block[block.find(lineEnd, block.find(lineStart))+len(lineEnd) : ]
+        if block.find(lineEnd, block.find(lineStart)) != -1: #checks if there is a new substring to be found after the end of the old substring
+            block = block[block.find(lineEnd, block.find(lineStart))+len(lineEnd) : ]
+        else:
+            block = ""
+        
         error.debug("parseTarget - found linestart = " + str(lineStart in block), 
                     "parseTarget - found lineEnd = " + str(lineEnd in block), 
                     "parseTarget - len(block) = "+str(len(block)), 
