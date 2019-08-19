@@ -470,6 +470,28 @@ def parseForLine(datastream, target):
         error.debug("parseForLine => Search Failed")
         return ""
     
+def sanityCheck():
+    """Returns True if all global variables are of correct type and ranges, False otherwise"""
+    global URLCurrent
+    global URLNext
+    global targetTitle
+    global targetURL
+    global comicNumber
+    global pageNumber
+    
+    fatelError = False
+    
+    if (targetURL == []):
+        error.log("Missing TargetURLs: 1006 (non-fatal)")
+    else:
+        if '' in targetURL:
+            error.log("TargetURLs are Null: 1026 (non-fatal)")
+            temp = []
+            for i in targetURL:
+                if (i != ''):
+                    temp.append(i)
+            targetURL = temp
+    
 if __name__ == '__main__':
     #These options need to be configured
     comicName       = "Comic Name"
@@ -582,6 +604,8 @@ if __name__ == '__main__':
             exit(-1004)
         if (targetURL == []):
             error.log("Missing TargetURLs: 1006 (non-fatal)")
+
+        sanityCheck()
             
         error.debug("targetTitle = " + str(targetTitle),
                     "targetURL = " + str(targetURL),
