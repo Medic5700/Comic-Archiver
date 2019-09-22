@@ -296,7 +296,8 @@ def saveTarget(targetURL, savePath, saveTitle, overrideExtension = None):
 def saveTarget2(targetURL, savePath, saveTitle, overrideExtension = None):
     """Takes a URL, filesystem savePath, and a file name (without file extention => Saves target of the URL at savePath as SaveTitle
     
-    Uses windows powershell instead python's urllib
+    Uses Windows Powershell instead python's urllib
+    Is really REALLY dumb performance wise, as it closes and opens a new instance of Powershell with EVERY call
     """
     
     error.debug("Attempting to save = " + targetURL)
@@ -321,7 +322,8 @@ def saveTarget2(targetURL, savePath, saveTitle, overrideExtension = None):
             error.err("saveTarget2: (-1016) Error Unable to save target via powershell",
                       process.args,
                       process.stdout.decode("UTF-8"),
-                      process.stderr.decode("UTF-8")
+                      process.stderr.decode("UTF-8"),
+                      "Does the working directory have [square brackets]? because that seems to screw with powershell <-------------------------"
                       )
             exit(-1016)
     except Exception as inst:
@@ -386,7 +388,8 @@ def loadWebpage(url):
 def loadWebpage2(url):
     """Takes a URL, returns the webpage contents as a string
     
-    Uses the system command line (powershell) instead of using urllib
+    Uses Windows Powershell instead python's urllib
+    Is really REALLY dumb performance wise, as it closes and opens a new instance of Powershell with EVERY call
     """
     datastream = None
     i = 0
