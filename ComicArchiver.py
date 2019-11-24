@@ -7,7 +7,6 @@ import urllib.request #for url stuff
 import time #to sleep
 import os #for the filesystem manipulation
 import subprocess #used for saving stuff from the web using the system shell commands (if urllib fails)
-version = "v4.8.5"
 
 class Debug:
     """Class for logging and debuging"""
@@ -518,7 +517,7 @@ if __name__ == '__main__':
     transactionFileName = "ComicArchiver-Transactions.csv"
     
     error = Debug(debugMode, "ComicArchiver.log") #Initialize the Logging Class
-    error.log("Comic Archiver has started, Version: " + version + " ==================================================")
+    error.log("Comic Archiver has started, =====================================================================")
     if (debugMode):
         error.log("Debug logging is enabled")
 
