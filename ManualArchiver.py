@@ -5,33 +5,44 @@ except:
 	print("ERROR Pillow module not installed")
 	exit()
 
+#creates required folder
 if not (os.path.exists("./saved/")):
 	os.makedirs("./saved/")
 	print("Made 'saved' directory")
 
 if not (os.path.exists("./savedOriginal/")):
 	os.makedirs("./savedOriginal/")
-	print("Made 'saveOriginal' directory")
+	print("Made 'savedOriginal' directory")
+
+ComicName = "ComicName"
+fileExclusionList = ("ManualArchiver.py",
+                     "saved",
+                     "savedOriginal")
+inputDirectory = "InputDirectory"
+saveOriginal = True #enables saving of the original pictures before they are stitched together
 
 while (True):
 	input("Next Element? [enter]:")
 
 	#takes files, moves them, and extracts them into usable format
-	if os.path.exists("InputDirectory"):
-		os.system("mv ./InputDirectory/* ./test.zip")
-		os.system("rm -r ./InputDirectory")
+	if os.path.exists("./" + inputDirectory):
+		os.system("mv ./" + inputDirectory + "/* ./test.zip")
+		os.system("rm -r ./" + inputDirectory)
 		os.system("unzip ./test.zip")
 		os.system("rm ./test.zip")
 
 	#get list of files
 	fileList = os.listdir()
-	fileList.remove('manual.py')
-	fileList.remove('saved')
-	fileList.remove('savedOriginal')
+	for i in fileExclusionList:
+		if i in fileList:
+			fileList.remove(i)
+	#fileList.remove('manual.py')
+	#fileList.remove('saved')
+	#fileList.remove('savedOriginal')
 	fileList.sort()
 	print("Number of images:\t" + str(len(fileList)))
 
-	#renames the files for better sorting
+	#renames the files for better sorting (IE: from '9.jpg, 10.jpg, 11.jpg' to '09.jpg, 10.jpg, 11.jpg')
 	for i in fileList:
 		temp = i.split(".")[0].rjust(4,"0")
 		temp += "."
@@ -39,13 +50,17 @@ while (True):
 		os.rename(i,temp)
 
 	fileList = os.listdir()
-	fileList.remove('manual.py')
-	fileList.remove('saved')
-	fileList.remove('savedOriginal')
+	for i in fileExclusionList:
+		if i in fileList:
+			fileList.remove(i)	
+	#fileList.remove('manual.py')
+	#fileList.remove('saved')
+	#fileList.remove('savedOriginal')
 	fileList.sort()
 	#print(fileList)
 
 	#figures out what extransion to save as
+	#TODO this needs doing better
 	extension = ""
 	for i in fileList:
 		t1 = i.split(".")[-1].lower()
@@ -76,18 +91,18 @@ while (True):
 			temp += i.height
 
 		#put stitched together picture in folder with correct number/name
-		newImage.save("./saved/" + "(Comic Name [" + str(estimatedNumber + 1).rjust(4, "0") + "])" + 
-				" Comic Name" + 
-				"." + str(extension))
+		newImage.save("./saved/" + "(" + ComicName +" [" + str(estimatedNumber + 1).rjust(4, "0") + "]) " + 
+		              ComicName + "." + str(extension))
 
 		#put initial pictures in folder with correct number/name
-		temp = 0
-		for i in img:
-			temp += 1
-			i.save("./savedOriginal/" + "(Comic Name [" + str(estimatedNumber + 1).rjust(4,"0") +
-				"-" + str(temp).rjust(2,"0") + "])" +
-				" Comic Name" + 
-				"." + str(extension))
+		#TODO save original pictures with original file extension (currently does not)
+		if saveOriginal == True:
+			temp = 0
+			for i in img:
+				temp += 1
+				i.save("./savedOriginal/" + "(" + ComicName + " [" + str(estimatedNumber + 1).rjust(4,"0") +
+				       "-" + str(temp).rjust(2,"0") + "]) " +
+				       ComicName + "." + str(extension))
 
 		print("Saved Image " + str(estimatedNumber + 1))
 
