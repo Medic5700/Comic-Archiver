@@ -494,6 +494,14 @@ def sanityCheck():
                     temp.append(i)
             targetURL = temp
     
+#class saveProcess:
+#    '''an attempt to use a SINGLE powershell instance to save multiple targets in series.
+#    IE: open powershell, give url, save thing, give url, save thing, etc
+#    '''
+#    #import subprocess
+#    def __init__(self):
+#        self.p = subprocess.Popen("powershell", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    
 if __name__ == '__main__':
     #These options need to be configured
     comicName       = "Comic Name"

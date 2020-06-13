@@ -88,10 +88,7 @@ while (True):
 		newImage.save("./saved/" + "(" + ComicName +" [" + str(estimatedNumber + 1).rjust(4, "0") + "]) " + 
 		              ComicName + "." + str(extension))
 
-		print("Saved Image Number: " + str(estimatedNumber + 1))
-
 		#put initial pictures in folder with correct number/name
-		#TODO save original pictures with original file extension (currently testing)
 		if saveOriginal == True:
 			countOriginal = 0
 			for i in img:
@@ -103,6 +100,8 @@ while (True):
 				countOriginal += 1
 
 			print("Number of Saved Original Images: " + str(countOriginal))
+
+		print("Saved Image Number: " + str(estimatedNumber + 1))
 
 		newImage.close()
 
