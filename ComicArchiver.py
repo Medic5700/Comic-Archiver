@@ -7,6 +7,7 @@ import urllib.request #for url stuff
 import time #to sleep
 import os #for the filesystem manipulation
 import subprocess #used for saving stuff from the web using the system shell commands (if urllib fails)
+import json #for javascript datascructure parsing, if needed
 
 class Debug:
     """Class for logging and debuging"""
@@ -641,7 +642,8 @@ if __name__ == '__main__':
             if (fullArchive):
                 fileTransaction = open(transactionFileName, 'a')
                 fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ j +","+ j[j.rfind("/"):len(j)] + "," + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "]) " + str(targetTitle) + j[j.rfind('.'):len(j)] + "\n")
-                fileTransaction.close()                
+                fileTransaction.close()
+            error.log("Processing webpage (" + str(pageNumber).zfill(numberWidth) + "); Saving Image (" + str(comicNumber) + ") : " + str(j))
             comicNumber = comicNumber + 1
 
         error.debug("Finished processing webpage (" + str(pageNumber).zfill(numberWidth) + ")")        
