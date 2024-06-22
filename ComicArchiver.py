@@ -8,21 +8,23 @@ import time #to sleep
 import os #for the filesystem manipulation
 import subprocess #used for saving stuff from the web using the system shell commands (if urllib fails)
 import json #for javascript datascructure parsing, if needed
+from typing import Any, Callable, Dict, Generic, List, Literal, Text, Tuple, Type, TypeVar
 
 class Debug:
     """Class for logging and debuging"""
     
-    def __init__(self, debugMode, file = "Debug.log"):
-        self.__filename = file
-        self.showDebug = debugMode #Bool
+    def __init__(self, debugMode : bool, file : str = "Debug.log"):
+        self.__filename : str = file
+        self.showDebug : bool = debugMode
         
-    def __save(self, text):
+    def __save(self, text : str):
         """Saves text to file as a log entry"""
         logfile = open(self.__filename, 'a')
         try:
             logfile.write(text)
         except:
             self.err("Error Occured in Error Logging Function: Attempting to report previous error")
+            i : str # line
             for i in text:
                 try:
                     logfile.write(i)
@@ -30,12 +32,12 @@ class Debug:
                     logfile.write("[ERROR]")
         logfile.close()
 
-    def log(self, text):
+    def log(self, text : str):
         """Takes string, pushes to stdout AND saves it to the log file
         
         For general logging, and non-fatal errors
         """
-        temp = "[" + time.asctime() + "] Log: " + text
+        temp : str = "[" + time.asctime() + "] Log: " + text
         print(temp)
         self.__save(temp + "\n")
     
@@ -65,9 +67,9 @@ class SpecialCases:
     """Class for handling special cases triggered by URLCurrent matching a key in the dictionary"""
     
     def __init__(self, specialCases = {}):
-        assert (type(specialCases) == type({})),"SpecialCases -> __init__ -> arg1: specialCases needs to be a dictionary"
+        assert type(specialCases) is dict, "SpecialCases -> __init__ -> arg1: specialCases needs to be a dictionary"
         
-        self.__cases = specialCases
+        self.__cases : dict = specialCases
         
     def trigger(self, url):
         """takes URL, if URL in specialCases, executes code"""
@@ -158,15 +160,15 @@ class SpecialCases:
 class Checkpoint:
     """Class for loading and saving checkpoints"""
     
-    def __init__(self, name = "Checkpoint.csv", checkpointFrequency = 16):
+    def __init__(self, name : str = "Checkpoint.csv", checkpointFrequency : int = 16):
         global URLCurrent
         global pageNumber
         global comicNumber        
         assert (checkpointFrequency>0),"Checkpoint -> __init__ -> arg2: checkpointFrequency needs to be greater then 0"
         
-        self.filename = name
-        self.__checkpointFrequency = checkpointFrequency
-        self.__callsSinceLastCheckpoint = 0
+        self.filename : str = name
+        self.__checkpointFrequency : int = checkpointFrequency
+        self.__callsSinceLastCheckpoint : int = 0
         if not (os.path.exists(self.filename)):
             error.log("Checkpoint file not found, creating checkpoint file")
             file = open(self.filename,'w')
@@ -181,7 +183,7 @@ class Checkpoint:
         global comicNumber
         
         error.debug("Attempting to load checkpoint")
-        raw = None
+        raw : List[str] = None
         try:
             file = open(self.filename, 'r')
             raw = file.read().split('\n')
@@ -190,7 +192,7 @@ class Checkpoint:
             error.err("Could not load checkpoint file: " + self.filename)
         
         try:
-            line = raw[len(raw)-2]
+            line : str = raw[len(raw)-2]
             error.debug("line: " + str(line))
             
             URLCurrent = (line.split(','))[0]
@@ -217,17 +219,17 @@ class Checkpoint:
         else:
             self.__callsSinceLastCheckpoint = self.__callsSinceLastCheckpoint + 1
         
-def scrubPath(usage, path, dropChar = False):
+def scrubPath(usage : Literal["windows", "web", "failsafe", "ascii"], path : str, dropChar : bool = False):
     """Takes a string, parses it based on usage (windows, web, failsafe, ascii), removes/escapes characters"""
     # http://stackoverflow.com/questions/1547899/which-characters-make-a-url-invalid
-    acceptableURLCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=" + "%"
+    acceptableURLCharacters : str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=" + "%"
     # https://msdn.microsoft.com/en-ca/library/windows/desktop/aa365247(v=vs.85).aspx#naming_conventions
-    acceptableWindowsCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 " + "`~!@#$%^&()-=_+[]{};',." #forbidden characters = "<>:/|?*" + "\\\""
-    acceptableWindowsCharactersFailSafe = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 " + "~%()-_[]{}."
+    acceptableWindowsCharacters : str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 " + "`~!@#$%^&()-=_+[]{};',." #forbidden characters = "<>:/|?*" + "\\\""
+    acceptableWindowsCharactersFailSafe : str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 " + "~%()-_[]{}."
     
-    output = ""
-    maxLength = None
-    whitelist = ""
+    output : str = ""
+    maxLength : int = None
+    whitelist : str = ""
     
     if (usage == "windows"):
         whitelist = acceptableWindowsCharacters
@@ -244,6 +246,7 @@ def scrubPath(usage, path, dropChar = False):
         error.err("scrubPath => argument 2 (usage) invalid: " + str(usage))
         exit(-1015)
     
+    i : str # char
     for i in path:
         if (i in whitelist):
             output += i
@@ -257,17 +260,17 @@ def scrubPath(usage, path, dropChar = False):
         output = output[0 : min(maxLength, len(output))]
     return output
 
-def saveTarget(targetURL, savePath, saveTitle, overrideExtension = None):
+def saveTarget(targetURL : str, savePath : str, saveTitle : str, overrideExtension : str = None):
     """Takes a URL, filesystem savePath, and a file name (without file extention) => Saves target of the URL at savePath as SaveTitle"""
     #assumes savePath is valid
     error.debug("Attempting to save = " + targetURL)
     
-    fileExtension = targetURL[targetURL.rfind('.') : len(targetURL)]
+    fileExtension : str = targetURL[targetURL.rfind('.') : len(targetURL)]
     if (overrideExtension != None):
         fileExtension = overrideExtension
     
     targetObject = None        
-    i = 0
+    i : int = 0
     while ((i <= 10) and (targetObject == None)):
         try:
             error.debug("Loading " + targetURL)
@@ -293,7 +296,7 @@ def saveTarget(targetURL, savePath, saveTitle, overrideExtension = None):
     error.debug("target saved")
     targetObject.close()
 
-def saveTarget2(targetURL, savePath, saveTitle, overrideExtension = None):
+def saveTarget2(targetURL : str, savePath : str, saveTitle : str, overrideExtension : str = None):
     """Takes a URL, filesystem savePath, and a file name (without file extention => Saves target of the URL at savePath as SaveTitle
     
     Uses Windows Powershell instead python's urllib
@@ -303,7 +306,7 @@ def saveTarget2(targetURL, savePath, saveTitle, overrideExtension = None):
     error.debug("Attempting to save = " + targetURL)
     error.debug("savePath:" + savePath, "saveTitle:" + saveTitle)
     
-    fileExtension = targetURL[targetURL.rfind('.') : len(targetURL)]
+    fileExtension : str = targetURL[targetURL.rfind('.') : len(targetURL)]
     if (overrideExtension != None):
         fileExtension = overrideExtension
         
@@ -332,7 +335,7 @@ def saveTarget2(targetURL, savePath, saveTitle, overrideExtension = None):
         
     error.debug("target saved")
 
-def looseDecoder(datastream, blocksize):
+def looseDecoder(datastream, blocksize : int):
     """Takes a webpage data, decodes webpage blocksize at a time, returns string containing webpage data
     
     Some webpages have a couple characters that can't be decoded
@@ -342,27 +345,28 @@ def looseDecoder(datastream, blocksize):
     assert (blocksize > 2)
     assert (blocksize%2 == 0)
     error.debug("looseDecoder - len(datastream) = " + str(len(datastream)))
-    errorCounter = 0
+    errorCounter : int = 0
     
-    temp = ""
+    temp : str = ""
+    i : int
     for i in range(0, int(len(datastream)/blocksize) - 1):
         try:
             temp += datastream[i*blocksize : (i+1)*blocksize].decode('utf-8')
         except Exception as inst:
             errorCounter = errorCounter + 1
-            for j in range(0, blocksize):
+            for _ in range(0, blocksize):
                 temp += " "
     if (errorCounter > 0):
         error.log("LooseDecoder Warning: 1011 (non-fatal) =>\tCould not decode part of webpage, substituting (" + str(errorCounter * blocksize) + ") blanks")
     return temp
 
-def loadWebpage(url):
+def loadWebpage(url : str):
     """Takes a URL, returns the webpage contents as a string"""
     webpageObject = None
     datasteam = None
     error.debug("Attempting to load webpage " + url)
-    i = 0
-    while ((i<=10) and (webpageObject == None)):
+    i : int = 0
+    while ((i <= 10) and (webpageObject == None)):
         try:
             error.debug("Loading " + url)
             webpageObject = urllib.request.urlopen(url)
@@ -370,10 +374,10 @@ def loadWebpage(url):
         except Exception as inst:
             error.log("Connection Fail: 1001 (non-fatal) =>" + "\tAttempt " + str(i) + ":" + str(inst) + ":\t" + str(url))
             time.sleep(4)
-        if (i==10):
+        if (i == 10):
             error.err("Coonection Timeout: -1001 (fatal) =>" + "\tTimeout while attempting to access webpage, Force System Exit")
             exit(-1001)        
-        i = i+1
+        i = i + 1
         
     try:
         error.debug("Decoding webpage")
@@ -385,14 +389,14 @@ def loadWebpage(url):
     error.debug("Webpage loaded")
     return datastream
 
-def loadWebpage2(url):
+def loadWebpage2(url : str):
     """Takes a URL, returns the webpage contents as a string
     
     Uses Windows Powershell instead python's urllib
     Is really REALLY dumb performance wise, as it closes and opens a new instance of Powershell with EVERY call
     """
     datastream = None
-    i = 0
+    i : int = 0
     while ((i<=10) and (datastream == None)):
         try:
             error.debug("Loading " + url)
@@ -408,7 +412,7 @@ def loadWebpage2(url):
     error.debug("Webpage loaded")    
     return datastream
 
-def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, blockStart = "", blockEnd = ""):
+def parseForTargets(datastream, lineStart : str, lineEnd : str, targetStart : str, targetEnd : str, blockStart : str = "", blockEnd : str = "") -> List[str]:
     """Takes in a string (webpage HTML), and search peramiters (lineStart, lineEnd, etc), returns an array of targets as strings
     
     (Mainly used to find the URL of picture(s))
@@ -419,14 +423,14 @@ def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, bloc
     blockStart   - inclusive, optional
     blockEnd     - inclusive, optional, starts search after blockStart
     """
-    targets = []
+    targets : List[str] = []
     if (blockStart == "" or blockEnd == ""):
         blockStart = lineStart
         blockEnd = lineEnd
-    block = datastream[datastream.find(blockStart) : datastream.find(blockEnd, datastream.find(blockStart) + len(blockStart)) + len(blockEnd)]
+    block : str = datastream[datastream.find(blockStart) : datastream.find(blockEnd, datastream.find(blockStart) + len(blockStart)) + len(blockEnd)]
     error.debug("parseTarget - Block = " + str(block))
     while ((lineStart in block) and (lineEnd in block)): #goes through block for each lineStart
-        substring = block[block.find(lineStart) : block.find(lineEnd, block.find(lineStart)) + len(lineEnd)]
+        substring : str = block[block.find(lineStart) : block.find(lineEnd, block.find(lineStart)) + len(lineEnd)]
         error.debug("parseTarget - substring = " + str(substring))
         
         try: #skips substring if targetStart isn't found
@@ -448,26 +452,26 @@ def parseForTargets(datastream, lineStart, lineEnd, targetStart, targetEnd, bloc
         
     return targets    
 
-def parseForString(datastream, lineStart, lineEnd, targetStart, targetEnd):
+def parseForString(datastream, lineStart : str, lineEnd : str, targetStart : str, targetEnd : str) -> str:
     """Takes in a string (webpage HTML) and search paramiters (lineStart, lineEnd, etc), returns a string found
         
     returns the empty string "" if target is not found"""
     try:
-        substring = datastream[datastream.index(lineStart) : datastream.index(lineEnd, datastream.index(lineStart)) + len(lineEnd)]
+        substring : str = datastream[datastream.index(lineStart) : datastream.index(lineEnd, datastream.index(lineStart)) + len(lineEnd)]
         return substring[substring.index(targetStart) + len(targetStart) : substring.index(targetEnd, substring.index(targetStart) + len(targetStart))]
     except:
         error.debug("parseForString => Search Failed")
         return ""    
     
-def parseForLine(datastream, target):
+def parseForLine(datastream, target : str) -> str:
     """Takes in a string (webpage HTML) and target, and returns the entire line the target was found on
     
     returns the empty string "" if target is not found"""
     #TODO needs more testing
     try:
-        targetLocation = datastream.index(target)
-        lineStart = datastream.rindex("\n", 0, targetLocation)
-        lineEnd = datastream.index("\n", targetLocation, len(datastream))
+        targetLocation : int = datastream.index(target)
+        lineStart : int = datastream.rindex("\n", 0, targetLocation)
+        lineEnd : int = datastream.index("\n", targetLocation, len(datastream))
         return datastream[lineStart:lineEnd]
     except:
         error.debug("parseForLine => Search Failed")
@@ -505,25 +509,25 @@ def sanityCheck():
     
 if __name__ == '__main__':
     #These options need to be configured
-    comicName       = "Comic Name"
-    URLStart        = "Start URL" #The url to start from
-    URLLast         = "End URL" #the last url in the comic series, to tell the program exactly where to stop
-    pagesToScan     = 9999 #Maximum number of pages that this program will scan in one go
-    debugMode       = False
-    useCheckpoints  = False
-    fullArchive     = False #saves the aditional information from webpage
+    comicName       : str   = "Comic Name"
+    URLStart        : str   = "Start URL" #The url to start from
+    URLLast         : str   = "End URL" #the last url in the comic series, to tell the program exactly where to stop
+    pagesToScan     : int   = 9999 #Maximum number of pages that this program will scan in one go
+    debugMode       : bool  = False
+    useCheckpoints  : bool  = False
+    fullArchive     : bool  = False #saves the aditional information from webpage
     
     #Other program options
-    cases           = {} 
+    cases           : dict  = {} 
     '''a dictionary for special cases, with keys being the current URL to trigger them, and the value being a string of python code to execute (still figuring out the security on that one)
     IE:
     cases           = {"www.exampleURL1.com": "targetURL = [\"www.exampleURL1.com/example.jpg\"]",
                        "www.exampleURL2.com": "targetURL = [\"www.exampleURL2.com/example.jpg\"]"
                         }
     '''
-    numberWidth     = 4 #the number of digits used to index comics
-    loopDelay       = 0 #time in seconds
-    transactionFileName = "ComicArchiver-Transactions.csv"
+    numberWidth     : int   = 4 #the number of digits used to index comics
+    loopDelay       : int   = 0 #time in seconds
+    transactionFileName : str = "ComicArchiver-Transactions.csv"
     
     error = Debug(debugMode, "ComicArchiver.log") #Initialize the Logging Class
     error.log("Comic Archiver has started, =====================================================================")
@@ -531,12 +535,12 @@ if __name__ == '__main__':
         error.log("Debug logging is enabled")
 
     #Global variables for parsing webpages
-    URLCurrent = URLStart
-    URLNext = None
-    targetTitle = ""
-    targetURL = None
-    comicNumber = 1
-    pageNumber = 1
+    URLCurrent      : str   = URLStart
+    URLNext         : str   = None
+    targetTitle     : str   = ""
+    targetURL       : str   = None
+    comicNumber     : int   = 1
+    pageNumber      : int   = 1
 
     special = SpecialCases(cases) #Initialize the SpecialCases Class
     if (useCheckpoints):
@@ -555,7 +559,8 @@ if __name__ == '__main__':
             file.write("Page URL, PageNumber, ComicNumber, Target URL, Original File Name, Saved File Title\n")
             file.close()
     
-    for i in range (0, pagesToScan): #used for loop as failsafe incase the exit condition doesn't work as inteneded
+    i : int
+    for i in range(0, pagesToScan): #used for loop as failsafe incase the exit condition doesn't work as inteneded
         if (useCheckpoints):
             check.save()
         datastream = loadWebpage(URLCurrent)
