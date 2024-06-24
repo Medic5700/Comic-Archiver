@@ -8,7 +8,7 @@ import time # to sleep
 import os # for the filesystem manipulation
 import subprocess # used for saving stuff from the web using the system shell commands (if urllib fails)
 import json # for javascript datascructure parsing, if needed
-from typing import Any, Callable, Dict, Generic, List, Literal, Text, Tuple, Type, TypeVar
+from typing import Any, Callable, Dict, Generic, Literal, Text, Tuple, Type, TypeVar
 
 '''
 class Debug:
@@ -116,13 +116,11 @@ class SpecialCases:
         assert type(url) is str
 
         if (url in self.__cases):
-            #error.log("Special Case detected: " + url)
             logger.info("Special Case detected: " + url)
             try:
                 self.__sandbox(self.__cases[url])
             except:
-                #error.err("SpecialCases->trigger->__sandbox : (-1014) Error while executeing special case")
-                logger.critical("SpecialCases->trigger->__sandbox : (-1014) Error while executeing special case")
+                logger.critical("SpecialCases->trigger->__sandbox: (-1014) Error while executeing special case")
                 exit(-1014)
     
     def __sandbox(self, code):
@@ -134,21 +132,12 @@ class SpecialCases:
         global comicNumber
         global pageNumber
         
-        #error.debug("Before executing exec command", 
-        #            "targetTitle = " + str(targetTitle), 
-        #            "targetURL   = " + str(targetURL), 
-        #            "URLNext     = " + str(URLNext), 
-        #            "URLCurrent  = " + str(URLCurrent),
-        #            "comicNumber = " + str(comicNumber),
-        #            "pageNumber  = " + str(pageNumber)
-        #            )
-        logger.debug("Before executing exec command")
-        logger.debug("targetTitle = " + str(targetTitle))
-        logger.debug("targetURL   = " + str(targetURL))
-        logger.debug("URLNext     = " + str(URLNext))
-        logger.debug("URLCurrent  = " + str(URLCurrent))
-        logger.debug("comicNumber = " + str(comicNumber))
-        logger.debug("pageNumber  = " + str(pageNumber))
+        logger.debug(f"Pre-Exec Command: targetTitle = {targetTitle}")
+        logger.debug(f"Pre-Exec Command: targetURL   = {targetURL}")
+        logger.debug(f"Pre-Exec Command: URLNext     = {URLNext}")
+        logger.debug(f"Pre-Exec Command: URLCurrent  = {URLCurrent}")
+        logger.debug(f"Pre-Exec Command: comicNumber = {comicNumber}")
+        logger.debug(f"Pre-Exec Command: pageNumber  = {pageNumber}")
         
         sandboxScope = {"__builtins__":None, 
                         "URLCurrent":URLCurrent, 
@@ -158,75 +147,53 @@ class SpecialCases:
                         "comicNumber":comicNumber, 
                         "pageNumber":pageNumber
                         }
-        #error.log("Executing code: \"" + code + "\"")
         logger.info("Executing code: \"" + code + "\"")
         exec(code, sandboxScope)
         
-        #only changes variables if they have changed
+        # only changes variables if they have changed
         if (URLCurrent != sandboxScope['URLCurrent']):
-            #error.debug("changing URLCurrent: " + str(URLCurrent) + " -> " + str(sandboxScope['URLCurrent']))
             logger.debug("changing URLCurrent: " + str(URLCurrent) + " -> " + str(sandboxScope['URLCurrent']))
             if not isinstance(sandboxScope['URLCurrent'], str):
-                #error.debug("could not change URLCurrent, incorrect type")
                 logger.debug("could not change URLCurrent, incorrect type")
             else:
                 URLCurrent = sandboxScope['URLCurrent']
         if (URLNext != sandboxScope['URLNext']):
-            #error.debug("changing URLNext: " + str(URLNext) + " -> " + str(sandboxScope['URLNext']))
             logger.debug("changing URLNext: " + str(URLNext) + " -> " + str(sandboxScope['URLNext']))
             if not isinstance(sandboxScope['URLNext'], str):
-                #error.debug("could not change URLNext, incorrect type")
                 logger.debug("could not change URLNext, incorrect type")
             else:
                 URLNext = sandboxScope['URLNext']
         if (targetTitle != sandboxScope['targetTitle']):
-            #error.debug("changing targetTitle: " + str(targetTitle) + " -> " + str(sandboxScope['targetTitle']))
             logger.debug("changing targetTitle: " + str(targetTitle) + " -> " + str(sandboxScope['targetTitle']))
             if not isinstance(sandboxScope['targetTitle'], str):
-                #error.debug("could not change targetTitle, incorrect type")
                 logger.debug("could not change targetTitle, incorrect type")
             else:
                 targetTitle = sandboxScope['targetTitle']
         if (targetURL != sandboxScope['targetURL']):
-            #error.debug("changing targetURL: " + str(targetURL) + " -> " + str(sandboxScope['targetURL']))
             logger.debug("changing targetURL: " + str(targetURL) + " -> " + str(sandboxScope['targetURL']))
             if (type(targetURL) != type([])):
-                #error.debug("could not change targetURL, incorrect type")
                 logger.debug("could not change targetURL, incorrect type")
             else:
                 targetURL = sandboxScope['targetURL']
         if (comicNumber != sandboxScope['comicNumber']):
-            #error.debug("changing comicNumber: " + str(comicNumber) + " -> " + str(sandboxScope['comicNumber']))
             logger.debug("changing comicNumber: " + str(comicNumber) + " -> " + str(sandboxScope['comicNumber']))
             if not isinstance(sandboxScope['comicNumber'], int):
-                #error.debug("could not change comicNumber, incorrect type")
                 logger.debug("could not change comicNumber, incorrect type")
             else:
                 comicNumber = sandboxScope['comicNumber']
         if (pageNumber != sandboxScope['pageNumber']):
-            #error.debug("changing pageNumber: " + str(pageNumber) + " -> " + str(sandboxScope['pageNumber']))
             logger.debug("changing pageNumber: " + str(pageNumber) + " -> " + str(sandboxScope['pageNumber']))
             if not isinstance(sandboxScope['pageNumber'], int):
-                #error.debug("could not change pageNumber, incorrect type")
                 logger.debug("could not change pageNumber, incorrect type")
             else:
                 pageNumber = sandboxScope['pageNumber']
         
-        #error.debug("After executing exec command", 
-        #            "targetTitle = " + str(targetTitle), 
-        #            "targetURL   = " + str(targetURL), 
-        #            "URLNext     = " + str(URLNext), 
-        #            "URLCurrent  = " + str(URLCurrent),
-        #            "comicNumber = " + str(comicNumber),
-        #            "pageNumber  = " + str(pageNumber)
-        #            ) 
-        logger.debug("After executing exec command")
-        logger.debug("targetTitle = " + str(targetTitle))
-        logger.debug("targetURL   = " + str(targetURL))
-        logger.debug("URLNext     = " + str(URLNext))
-        logger.debug("URLCurrent  = " + str(URLCurrent))
-        logger.debug("comicNumber = " + str(comicNumber))
-        logger.debug("pageNumber  = " + str(pageNumber))
+        logger.debug(f"Post-Exec Command: targetTitle = {targetTitle}")
+        logger.debug(f"Post-Exec Command: targetURL   = {targetURL}")
+        logger.debug(f"Post-Exec Command: URLNext     = {URLNext}")
+        logger.debug(f"Post-Exec Command: URLCurrent  = {URLCurrent}")
+        logger.debug(f"Post-Exec Command: comicNumber = {comicNumber}")
+        logger.debug(f"Post-Exec Command: pageNumber  = {pageNumber}")
     
 class Checkpoint:
     """Class for loading and saving checkpoints"""
@@ -244,7 +211,6 @@ class Checkpoint:
         self.__checkpointFrequency : int = checkpointFrequency
         self.__callsSinceLastCheckpoint : int = 0
         if not (os.path.exists(self.filename)):
-            #error.log("Checkpoint file not found, creating checkpoint file")
             logger.info("Checkpoint file not found, creating checkpoint file")
             file = open(self.filename,'w')
             file.write("URLCurrent,pageNumber,comicNumber\n")
@@ -257,30 +223,25 @@ class Checkpoint:
         global pageNumber
         global comicNumber
         
-        #error.debug("Attempting to load checkpoint")
         logger.debug("Attempting to load checkpoint")
-        raw : List[str] = None
+        raw : list[str] = None
         try:
             file = open(self.filename, 'r')
             raw = file.read().split('\n')
             file.close()
         except Exception as exception:
-            #error.err("Could not load checkpoint file: " + self.filename)
-            logger.error("Could not load checkpoint file: " + self.filename)
+            logger.error(f"Could not load checkpoint file: {self.filename}")
         
         try:
             line : str = raw[len(raw)-2]
-            #error.debug("line: " + str(line))
-            logger.debug("line: " + str(line))
+            logger.debug("line: {line}")
             
             URLCurrent = str((line.split(','))[0])
             pageNumber = int((line.split(','))[1])
             comicNumber = int((line.split(','))[2])
-            #error.log("Checkpoint Loaded: " + URLCurrent)
-            logger.info("Checkpoint Loaded: " + URLCurrent)
+            logger.info(f"Checkpoint Loaded: {URLCurrent}")
         except Exception as exception:
-            #error.err("Checkpoint file not formated correctly: " + self.filename)
-            logger.error("Checkpoint file not formated correctly: " + self.filename)
+            logger.error(f"Checkpoint file not formated correctly: {self.filename}")
         
     def save(self):
         """Saves checkpoint, saves (URLCurrent, pageNumber, comicNumber) on every checkpointFrequency"""
@@ -288,15 +249,13 @@ class Checkpoint:
         global pageNumber
         global comicNumber
         
-        #error.debug("Attempting to save checkpoint")
         logger.debug("Attempting to save checkpoint")
         if (self.__callsSinceLastCheckpoint == self.__checkpointFrequency - 1):
             file = open(self.filename, 'a')
             file.write(URLCurrent + "," + str(pageNumber) + "," + str(comicNumber) + "\n")
             file.close()
             
-            #error.log("Checkpoint Saved: " + URLCurrent)
-            logger.info("Checkpoint Saved: " + URLCurrent)
+            logger.info(f"Checkpoint Saved: {URLCurrent}")
             self.__callsSinceLastCheckpoint = 0
         else:
             self.__callsSinceLastCheckpoint = self.__callsSinceLastCheckpoint + 1
@@ -331,8 +290,7 @@ def scrubPath(usage : Literal["windows", "web", "failsafe", "ascii"], path : str
         for i in range(0,256):
             whitelist += chr(i)
     else:
-        #error.err("scrubPath => argument 2 (usage) invalid: " + str(usage))
-        logger.critical("scrubPath => argument 2 (usage) invalid: " + str(usage))
+        logger.critical(f"scrubPath => argument 2 (usage) invalid: {usage}")
         exit(-1015)
     
     i : str # char
@@ -361,8 +319,7 @@ def saveTarget(targetURL : str, savePath : str, saveTitle : str, overrideExtensi
     assert len(saveTitle) > 0
     assert (type(overrideExtension) is str) or (type(overrideExtension) is type(None))
 
-    #error.debug("Attempting to save = " + targetURL)
-    logger.debug("Attempting to save = " + targetURL)
+    logger.debug(f"Attempting to save = {targetURL}")
     
     fileExtension : str = targetURL[targetURL.rfind('.') : len(targetURL)]
     if (overrideExtension != None):
@@ -372,32 +329,26 @@ def saveTarget(targetURL : str, savePath : str, saveTitle : str, overrideExtensi
     i : int = 0
     while ((i <= 10) and (targetObject == None)):
         try:
-            #error.debug("Loading " + targetURL)
-            logger.debug("Loading " + targetURL)
+            logger.debug(f"Loading url: {targetURL}")
             targetObject = (urllib.request.urlopen(targetURL))
         except Exception as inst: # handles timeout I think
-            #error.log("Connection Fail: 1007 (non-fatal) =>" + '\tAttempt ' + str(i) + ":" + str(inst) + ":\t" + str(targetURL))
-            logger.warning("Connection Fail =>" + '\tAttempt ' + str(i) + ":" + str(inst) + ":\t" + str(targetURL))
+            logger.warning(f"Connection Fail =>\tAttempt {i}:{inst}:\t{targetURL}")
             time.sleep(4)  
         if (i == 10): # FAILSAFE
-            #error.err("Picture Load Timeout: -1008 (fatal) =>\tFailed to load picture, Forcing system exit")
-            logger.critical("Picture Load Timeout: -1008 (fatal) =>\tFailed to load picture, Forcing system exit")
+            logger.critical("Picture Load Timeout: Failed to load picture, Forcing system exit")
             exit(-1008)
         i = i + 1
 
     try:
         if (os.path.exists(savePath + "/" + saveTitle + fileExtension)): # checks if file exists
-            #error.log("File exists: 1012 (non-fatal) => \tOverwriting existing file: \t" + savePath + "/" + saveTitle + fileExtension)
-            logger.warning("File exists; Overwriting existing file: \t" + savePath + "/" + saveTitle + fileExtension)
+            logger.warning(f"File exists; Overwriting existing file: {savePath}/{saveTitle}{fileExtension}")
         fileObject = open(savePath + "/" + saveTitle + fileExtension, 'wb')
         fileObject.write(targetObject.read())
         fileObject.close()
     except Exception as inst:
-        #error.err("Picture failed to save: -1010 (fatal) =>\tSaveTitle:" + saveTitle + "\tExtension:" + fileExtension + "\tError =>\t" + str(inst))
-        logger.critical("Picture failed to save: -1010 (fatal) =>\tSaveTitle:" + saveTitle + "\tExtension:" + fileExtension + "\tError =>\t" + str(inst))
+        logger.critical(f"Picture failed to save: SaveTitle: {saveTitle}\tExtension:{fileExtension}\tError =>\t{inst}")
         exit(-1010)
     
-    #error.debug("target saved")
     logger.debug("target saved")
     targetObject.close()
 
@@ -416,19 +367,16 @@ def saveTarget2(targetURL : str, savePath : str, saveTitle : str, overrideExtens
     assert len(saveTitle) > 0
     assert (type(overrideExtension) is str) or (type(overrideExtension) is type(None))
 
-    #error.debug("Attempting to save = " + targetURL)
-    logger.info("Attempting to save = " + targetURL)
-    #error.debug("savePath:" + savePath, "saveTitle:" + saveTitle)
-    logger.info("savePath:" + savePath, "saveTitle:" + saveTitle)
+    logger.debug(f"Attempting to save = {targetURL}")
+    logger.debug(f"savePath: {savePath} \tsaveTitle: {saveTitle}")
     
     fileExtension : str = targetURL[targetURL.rfind('.') : len(targetURL)]
     if (overrideExtension != None):
         fileExtension = overrideExtension
         
     if (os.path.exists(savePath + "/" + saveTitle + fileExtension)): # checks if file exists
-        #error.log("File exists: 1012 (non-fatal) => \tskipping existing file: \t" + savePath + "/" + saveTitle + fileExtension)
-        logger.info("File exists: 1012 (non-fatal) => \tskipping existing file: \t" + savePath + "/" + saveTitle + fileExtension)
-        return    
+        logger.info(f"File exists: skipping existing file: {savePath}/{saveTitle}{fileExtension}")
+        return
     ''' #Sudo code for powershell command
     Invoke-WebRequest $targetURL -OutFile (savePath + "test.jpg"); 
     mv -literalpath (savePath + "test.jpg") (savePath + saveTitle + fileExtension)
@@ -438,12 +386,6 @@ def saveTarget2(targetURL : str, savePath : str, saveTitle : str, overrideExtens
         process = subprocess.run(["powershell","Invoke-WebRequest \"" + targetURL + "\" -OutFile \"" + savePath + "/" + "test.jpg" + "\"; mv -literalpath '" + savePath + "/" + "test.jpg" + "' '" + savePath + "/" + saveTitle + fileExtension + "'"],
                        stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         if (process.stderr != b''):
-            #error.err("saveTarget2: (-1016) Error Unable to save target via powershell",
-            #          process.args,
-            #          process.stdout.decode("UTF-8"),
-            #          process.stderr.decode("UTF-8"),
-            #          "Does the working directory have [square brackets]? because that seems to screw with powershell <-------------------------"
-            #          )
             logger.critical("saveTarget2: (-1016) Error Unable to save target via powershell")
             logger.critical(process.args)
             logger.critical(process.stdout.decode("UTF-8"))
@@ -451,11 +393,9 @@ def saveTarget2(targetURL : str, savePath : str, saveTitle : str, overrideExtens
             logger.critical("Does the working directory have [square brackets]? because that seems to screw with powershell <-------------------------")
             exit(-1016)
     except Exception as inst:
-        #error.err("saveTarget2: (-1015) Error Unable to save target via powershell => " + str(inst))
-        logger.critical("saveTarget2: (-1015) Error Unable to save target via powershell => " + str(inst))
+        logger.critical(f"saveTarget2: Error Unable to save target via powershell => {inst}")
         exit(-1015)
         
-    #error.debug("target saved")
     logger.debug("target saved")
 
 def looseDecoder(datastream, blocksize : int = 4) -> str:
@@ -470,8 +410,7 @@ def looseDecoder(datastream, blocksize : int = 4) -> str:
     assert (blocksize > 2)
     assert (blocksize % 2 == 0)
 
-    #error.debug("looseDecoder - len(datastream) = " + str(len(datastream)))
-    logger.debug("looseDecoder - len(datastream) = " + str(len(datastream)))
+    logger.debug(f"looseDecoder - len(datastream) = {len(datastream)}")
     errorCounter : int = 0
     
     temp : str = ""
@@ -484,8 +423,7 @@ def looseDecoder(datastream, blocksize : int = 4) -> str:
             for _ in range(0, blocksize):
                 temp += " "
     if (errorCounter > 0):
-        #error.log("LooseDecoder Warning: 1011 (non-fatal) =>\tCould not decode part of webpage, substituting (" + str(errorCounter * blocksize) + ") blanks")
-        logger.info("LooseDecoder Warning: 1011 (non-fatal) =>\tCould not decode part of webpage, substituting (" + str(errorCounter * blocksize) + ") blanks")
+        logger.warning(f"LooseDecoder =>\tCould not decode part of webpage, substituting ({errorCounter * blocksize}) blanks")
     return temp
 
 def asciiDecoder(datastream : bytes) -> str:
@@ -493,48 +431,50 @@ def asciiDecoder(datastream : bytes) -> str:
     assert type(datastream) is bytes
 
     output : str = ""
+    replaced : int = 0
 
     i : int
     for i in range(len(datastream)):
         if datastream[i] < 128:
             output += chr(datastream[i])
+        else:
+            output += " "
+            replaced += 1
+
+    logger.warning(f"Could not decode ({replaced}) bytes")
 
     return output
 
 
 def loadWebpage(url : str) -> str:
     """Takes a URL, returns the webpage contents as a string"""
+    assert type(url) is str
+    assert len(url) > 0
+
     webpageObject = None
     datastream : str = None
-    #error.debug("Attempting to load webpage " + url)
-    logger.debug("Attempting to load webpage " + url)
+    logger.debug(f"Attempting to load webpage: {url}")
     i : int = 0
     while ((i <= 10) and (webpageObject == None)):
         try:
-            #error.debug("Loading " + url)
-            logger.debug("Loading " + url)
+            logger.debug(f"Loading url: {url}")
             webpageObject = urllib.request.urlopen(url)
             # http://stackoverflow.com/questions/2712524/handling-urllib2s-timeout-python #TODO: check if order matters
         except Exception as inst:
-            #error.log("Connection Fail: 1001 (non-fatal) =>" + "\tAttempt " + str(i) + ":" + str(inst) + ":\t" + str(url))
-            logger.info("Connection Fail: 1001 (non-fatal) =>" + "\tAttempt " + str(i) + ":" + str(inst) + ":\t" + str(url))
+            logger.info(f"Connection Fail => Attempt {i}:{inst}:\t{url}")
             time.sleep(4)
         if (i == 10):
-            #error.err("Coonection Timeout: -1001 (fatal) =>" + "\tTimeout while attempting to access webpage, Force System Exit")
-            logger.critical("Coonection Timeout: -1001 (fatal) =>" + "\tTimeout while attempting to access webpage, Force System Exit")
+            logger.critical("Coonection Timeout => Timeout while attempting to access webpage, Force System Exit")
             exit(-1001)        
-        i = i + 1
+        i += 1
         
     try:
-        #error.debug("Decoding webpage")
         logger.debug("Decoding webpage")
         datastream = asciiDecoder(webpageObject.read()) # may help for webpages that seem to have one bad character
     except Exception as inst:
-        #error.err("Decode Error: -1003 (fatal) =>" + "\tUTF-8 decode error, Force System Exit =>\t" + str(inst))
-        logger.critical("Decode Error: -1003 (fatal) =>" + "\tUTF-8 decode error, Force System Exit =>\t" + str(inst))
+        logger.critical(f"Decode Error => UTF-8 decode error, Force System Exit => {inst}")
         exit(-1003)  
     webpageObject.close()
-    #error.debug("Webpage loaded")
     logger.debug("Webpage loaded")
     return datastream
 
@@ -548,24 +488,20 @@ def loadWebpage2(url : str):
     i : int = 0
     while ((i<=10) and (datastream == None)):
         try:
-            #error.debug("Loading " + url)
-            logger.debug("Loading " + url)
+            logger.debug(f"Loading url: {url}")
             datastream = str(    subprocess.check_output(["powershell", "(Invoke-WebRequest \"" + url + "\").Content"])    )
         except Exception as inst:
-            #error.log("Connection Fail: 1013 (non-fatal) =>" + '\tAttempt ' + str(i) + ":" + str(inst) + ":\t" + str(url))
-            logger.info("Connection Fail: 1013 (non-fatal) =>" + '\tAttempt ' + str(i) + ":" + str(inst) + ":\t" + str(url))
+            logger.info(f"Connection Fail => Attempt {i}:{inst}:\t{url}")
             time.sleep(4)
         if (i==10):
-            #error.err("Coonection Timeout: -1013 (fatal) =>" + "\tTimeout while attempting to access webpage, Force System Exit")
-            logger.critical("Coonection Timeout: -1013 (fatal) =>" + "\tTimeout while attempting to access webpage, Force System Exit")
+            logger.critical("Coonection Timeout => Timeout while attempting to access webpage, Force System Exit")
             exit(-1013)        
-        i = i + 1    
+        i += 1    
         
-    #error.debug("Webpage loaded")
     logger.debug("Webpage loaded")
     return datastream
 
-def parseForTargets(datastream, lineStart : str, lineEnd : str, targetStart : str, targetEnd : str, blockStart : str = "", blockEnd : str = "") -> List[str]:
+def parseForTargets(datastream, lineStart : str, lineEnd : str, targetStart : str, targetEnd : str, blockStart : str = "", blockEnd : str = "") -> list[str]:
     """Takes in a string (webpage HTML), and search peramiters (lineStart, lineEnd, etc), returns an array of targets as strings
     
     (Mainly used to find the URL of picture(s))
@@ -576,22 +512,19 @@ def parseForTargets(datastream, lineStart : str, lineEnd : str, targetStart : st
     blockStart   - inclusive, optional
     blockEnd     - inclusive, optional, starts search after blockStart
     """
-    targets : List[str] = []
+    targets : list[str] = []
     if (blockStart == "" or blockEnd == ""):
         blockStart = lineStart
         blockEnd = lineEnd
     block : str = datastream[datastream.find(blockStart) : datastream.find(blockEnd, datastream.find(blockStart) + len(blockStart)) + len(blockEnd)]
-    #error.debug("parseTarget - Block = " + str(block))
-    logger.debug("parseTarget - Block = " + str(block))
+    logger.debug(f"parseTarget - Block = {block}")
     while ((lineStart in block) and (lineEnd in block)): # goes through block for each lineStart
         substring : str = block[block.find(lineStart) : block.find(lineEnd, block.find(lineStart)) + len(lineEnd)]
-        #error.debug("parseTarget - substring = " + str(substring))
-        logger.debug("parseTarget - substring = " + str(substring))
+        logger.debug(f"parseTarget - substring = {substring}")
         
         try: # skips substring if targetStart isn't found
             targets.append(   substring[substring.index(targetStart) + len(targetStart) : substring.index(targetEnd, substring.index(targetStart) + len(targetStart))]   )
         except:
-            #error.debug("praseTarget - Target not found")
             logger.debug("praseTarget - Target not found")
             
         if block.find(lineEnd, block.find(lineStart)) != -1: # checks if there is a new substring to be found after the end of the old substring
@@ -599,17 +532,11 @@ def parseForTargets(datastream, lineStart : str, lineEnd : str, targetStart : st
         else:
             block = ""
         
-        #error.debug("parseTarget - found linestart = " + str(lineStart in block), 
-        #            "parseTarget - found lineEnd = " + str(lineEnd in block), 
-        #            "parseTarget - len(block) = "+str(len(block)), 
-        #            "praseTarget - reamining block = " + str(block),
-        #            "parseTarget - targets = "+str(targets)
-        #            )
-        logger.debug("parseTarget - found linestart = " + str(lineStart in block))
-        logger.debug("parseTarget - found lineEnd = " + str(lineEnd in block))
-        logger.debug("parseTarget - len(block) = "+str(len(block)))
-        logger.debug("praseTarget - reamining block = " + str(block))
-        logger.debug("parseTarget - targets = "+str(targets))
+        logger.debug(f"parseTarget - found linestart = {lineStart in block}")
+        logger.debug(f"parseTarget - found lineEnd = {lineEnd in block}")
+        logger.debug(f"parseTarget - len(block) = {len(block)}")
+        logger.debug(f"praseTarget - reamining block = {block}")
+        logger.debug(f"parseTarget - targets = {targets}")
         
     return targets    
 
@@ -621,14 +548,14 @@ def parseForString(datastream, lineStart : str, lineEnd : str, targetStart : str
         substring : str = datastream[datastream.index(lineStart) : datastream.index(lineEnd, datastream.index(lineStart)) + len(lineEnd)]
         return substring[substring.index(targetStart) + len(targetStart) : substring.index(targetEnd, substring.index(targetStart) + len(targetStart))]
     except:
-        #error.debug("parseForString => Search Failed")
         logger.debug("parseForString => Search Failed")
         return ""    
     
 def parseForLine(datastream, target : str) -> str:
     """Takes in a string (webpage HTML) and target, and returns the entire line the target was found on
     
-    returns the empty string "" if target is not found"""
+    returns the empty string "" if target is not found
+    """
     #TODO needs more testing
     try:
         targetLocation : int = datastream.index(target)
@@ -636,7 +563,6 @@ def parseForLine(datastream, target : str) -> str:
         lineEnd : int = datastream.index("\n", targetLocation, len(datastream))
         return datastream[lineStart:lineEnd]
     except:
-        #error.debug("parseForLine => Search Failed")
         logger.debug("parseForLine => Search Failed")
         return ""
     
@@ -652,11 +578,9 @@ def sanityCheck():
     fatelError = False
     
     if (targetURL == []):
-        #error.log("Missing TargetURLs: 1006 (non-fatal)")
         logger.info("Missing TargetURLs: 1006 (non-fatal)")
     else:
         if '' in targetURL:
-            #error.log("TargetURLs are Null: 1026 (non-fatal)")
             logger.info("TargetURLs are Null: 1026 (non-fatal)")
             temp = []
             for i in targetURL:
@@ -714,36 +638,27 @@ if __name__ == '__main__':
     if debugMode:
         logger.info("Debug logging is enabled")
    
-    #error = Debug(debugMode, "ComicArchiver.log") # Initialize the Logging Class
-    #error.log("Comic Archiver has started, =====================================================================")
-    #if (debugMode):
-    #    error.log("Debug logging is enabled")
-    
-
     # Global variables for parsing webpages
-    URLCurrent      : str   = URLStart
-    URLNext         : str   = None
-    targetTitle     : str   = ""
-    targetURL       : str   = None
-    comicNumber     : int   = 1
-    pageNumber      : int   = 1
+    URLCurrent      : str               = URLStart
+    URLNext         : str               = None
+    targetTitle     : str               = ""
+    targetURL       : list[str]         = None
+    comicNumber     : int               = 1
+    pageNumber      : int               = 1
 
     special = SpecialCases(cases) # Initialize the SpecialCases Class
     if (useCheckpoints):
-        #error.log("Checkpoints Enabled")
         logger.info("Checkpoints Enabled")
         check = Checkpoint("ComicArchiver-Checkpoint.csv",16) # Initialize the Checkpoint Class
         check.load()
 
     if not (os.path.exists("./saved/")): # create folder if it doesn't exsist
-        #error.log("Creating directory:\t" + "./saved/")
-        logger.info("Creating directory:\t" + "./saved/")
+        logger.info("Creating directory: ./saved/")
         os.makedirs("./saved/")
     
     if (fullArchive):
         if (not os.path.exists(transactionFileName)):
-            #error.log(transactionFileName + " not found, creating file")
-            logger.info(transactionFileName + " not found, creating file")
+            logger.info(f"{transactionFileName} not found, creating file")
             file = open(transactionFileName, 'w')
             file.write("Page URL, PageNumber, ComicNumber, Target URL, Original File Name, Saved File Title\n")
             file.close()
@@ -754,8 +669,8 @@ if __name__ == '__main__':
             check.save()
         datastream = loadWebpage(URLCurrent)
         #error.log("processing webpage (p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "-t" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + ") = \t" + URLCurrent)
-        logger.info("processing webpage (p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "-t" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + ") = \t" + URLCurrent)
-        
+        logger.info(f"Processing webpage (p{ str(pageNumber).zfill(numberWidth) }-t{ str(comicNumber).zfill(numberWidth) }) = {URLCurrent}")
+
         # This is where the parse Functions are called
         # UserTweak
         ''' # title
@@ -806,22 +721,16 @@ if __name__ == '__main__':
         
         # sanity checks
         if (targetTitle == None):
-            #error.err("Missing TargetTitle: -1004")
             logger.critical("Missing TargetTitle: -1004")
             exit(-1004)
         if (targetURL == []):
-            #error.log("Missing TargetURLs: 1006 (non-fatal)")
-            logger.info("Missing TargetURLs: 1006 (non-fatal)")
+            logger.info("Missing TargetURLs")
 
         sanityCheck()
-            
-        #error.debug("targetTitle = " + str(targetTitle),
-        #            "targetURL = " + str(targetURL),
-        #            "URLNext = " + URLNext
-        #            )
-        logger.debug("targetTitle = " + str(targetTitle))
-        logger.debug("targetURL = " + str(targetURL))
-        logger.debug("URLNext = " + URLNext)
+        
+        logger.debug(f"targetTitle = {targetTitle}")
+        logger.debug(f"targetURL = {targetURL}")
+        logger.debug(f"URLNext = {URLNext}")
         
         if (fullArchive):
             saveTarget(URLCurrent, "saved", "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle), ".html") # saveing html page
@@ -832,7 +741,7 @@ if __name__ == '__main__':
             if (targetDiscription != ""):
                 if (os.path.exists("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".txt")):
                     #error.log("File exists, overwriting: " + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".txt")
-                    logger.info("File exists, overwriting: " + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".txt")
+                    logger.info(f"File exists, overwriting: ({comicName} [{str(comicNumber).zfill(numberWidth)}-p{str(pageNumber).zfill(numberWidth)}]) {targetTitle}.txt")
                 fileDiscription = open("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".txt", 'wb') # notice this is writing in binary mode
                 fileDiscription.write((targetDiscription + "\n").encode('UTF-8')) # encoding it in UTF-8
                 fileDiscription.close()
@@ -845,19 +754,16 @@ if __name__ == '__main__':
                 fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ j +","+ j[j.rfind("/"):len(j)] + "," + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "]) " + str(targetTitle) + j[j.rfind('.'):len(j)] + "\n")
                 fileTransaction.close()
             #error.log("Processing webpage (" + str(pageNumber).zfill(numberWidth) + "); Saving Image (" + str(comicNumber) + ") : " + str(j))
-            logger.info("Processing webpage (" + str(pageNumber).zfill(numberWidth) + "); Saving Image (" + str(comicNumber) + ") : " + str(j))
+            logger.info(f"Processing webpage ({str(pageNumber).zfill(numberWidth)}); Saving Image ({str(comicNumber).zfill(numberWidth)}) : {j}")
             comicNumber = comicNumber + 1
 
-        #error.debug("Finished processing webpage (" + str(pageNumber).zfill(numberWidth) + ")")   
-        logger.debug("Finished processing webpage (" + str(pageNumber).zfill(numberWidth) + ")")     
+        logger.debug(f"Finished processing webpage ({str(pageNumber).zfill(numberWidth)})")     
         if (URLCurrent == URLLast): # check for conclusion of comic
-            #error.log("End condition detected, program exit")
             logger.info("End condition detected, program exit")
             exit(0)        
         
         if (URLNext == None): #TODO this check should happen with URLCurrent at the top
-            #error.err("Missing URLNext: -1005 (fatal) =>\tURLNext missing, end condition not detected, forceing system exit")
-            logger.critical("Missing URLNext: -1005 (fatal) =>\tURLNext missing, end condition not detected, forceing system exit")
+            logger.critical("Missing URLNext: URLNext missing, end condition not detected, forceing system exit")
             exit(-1005)
         
         # reset and reload
@@ -868,6 +774,5 @@ if __name__ == '__main__':
         targetURL = None       
         time.sleep(loopDelay)
 
-    #error.log("End Condition: -1009 (Unknown) =>\tPagesToScan reached, program terminating")
-    logger.warning("End Condition: -1009 (Unknown) =>\tPagesToScan reached, program terminating")
+    logger.warning("End Condition: PagesToScan reached, program terminating")
     exit(-1009)
