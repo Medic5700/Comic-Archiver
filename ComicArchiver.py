@@ -578,10 +578,10 @@ def sanityCheck():
     fatelError = False
     
     if (targetURL == []):
-        logger.info("Missing TargetURLs: 1006 (non-fatal)")
+        logger.info("Missing TargetURLs")
     else:
         if '' in targetURL:
-            logger.info("TargetURLs are Null: 1026 (non-fatal)")
+            logger.info("TargetURLs are Null")
             temp = []
             for i in targetURL:
                 if (i != ''):
@@ -668,7 +668,6 @@ if __name__ == '__main__':
         if (useCheckpoints):
             check.save()
         datastream = loadWebpage(URLCurrent)
-        #error.log("processing webpage (p" + (('{:0>' + str(numberWidth) + '}').format(pageNumber)) + "-t" + (('{:0>' + str(numberWidth) + '}').format(comicNumber)) + ") = \t" + URLCurrent)
         logger.info(f"Processing webpage (p{ str(pageNumber).zfill(numberWidth) }-t{ str(comicNumber).zfill(numberWidth) }) = {URLCurrent}")
 
         # This is where the parse Functions are called
@@ -676,34 +675,37 @@ if __name__ == '__main__':
         ''' # title
         Some reference HTML
         '''
-        targetTitle = scrubPath("windows", parseForString(datastream,
-                                                          '', # lineStart   inclusive
-                                                          '', # lineEnd     inclusive
-                                                          '', # targetStart non-inclusive
-                                                          '') # targetEnd   non-inclusive
-                                )
+        targetTitle = parseForString(datastream,
+                                        '',     # lineStart     inclusive
+                                        '',     # lineEnd       inclusive
+                                        '',     # targetStart   non-inclusive
+                                        ''      # targetEnd     non-inclusive
+                                    )
+        targetTitle = scrubPath("windows", targetTitle)
         
         ''' # next URL
         Some reference HTML
         '''
-        URLNext = scrubPath("web", parseForString(datastream,
-                                                  '', # lineStart   inclusive
-                                                  '', # lineEnd     inclusive
-                                                  '', # targetStart non-inclusive
-                                                  '') # targetEnd   non-inclusive
-                            )
+        URLNext = parseForString(datastream,
+                                    '',     # lineStart     inclusive
+                                    '',     # lineEnd       inclusive
+                                    '',     # targetStart   non-inclusive
+                                    ''      # targetEnd     non-inclusive
+                                )
+        URLNext = scrubPath("web", URLNext)
         
         ''' # target
         Some reference HTML
         '''
         targetURL = parseForTargets(datastream,
-                                    '', # lineStart   inclusive
-                                    '', # lineEnd     inclusive
-                                    '', # targetStart non-inclusive
-                                    '', # targetEnd   non-inclusive
-                                    '', # blockStart  inclusive     optional
-                                    '') # blockEnd    inclusive     optional
-        
+                                    '', # lineStart     inclusive
+                                    '', # lineEnd       inclusive
+                                    '', # targetStart   non-inclusive
+                                    '', # targetEnd     non-inclusive
+                                    '', # blockStart    inclusive       optional
+                                    ''  # blockEnd      inclusive       optional
+                                    )
+        i : int
         for i in range(len(targetURL)):
             targetURL[i] = scrubPath("web", targetURL[i])
             
@@ -712,10 +714,11 @@ if __name__ == '__main__':
             Some reference HTML
             '''
             targetDiscription = parseForString(datastream,
-                                               '', # lineStart   inclusive
-                                               '', # lineEnd     inclusive
-                                               '', # targetStart non-inclusive
-                                               '') # targetEnd   non-inclusive
+                                                '', # lineStart     inclusive
+                                                '', # lineEnd       inclusive
+                                                '', # targetStart   non-inclusive
+                                                ''  # targetEnd     non-inclusive
+                                                )
 
         special.trigger(URLCurrent)
         
@@ -740,20 +743,19 @@ if __name__ == '__main__':
             
             if (targetDiscription != ""):
                 if (os.path.exists("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".txt")):
-                    #error.log("File exists, overwriting: " + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".txt")
                     logger.info(f"File exists, overwriting: ({comicName} [{str(comicNumber).zfill(numberWidth)}-p{str(pageNumber).zfill(numberWidth)}]) {targetTitle}.txt")
                 fileDiscription = open("saved/" + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "-p" + str(pageNumber).zfill(numberWidth) + "]) " + str(targetTitle) + ".txt", 'wb') # notice this is writing in binary mode
                 fileDiscription.write((targetDiscription + "\n").encode('UTF-8')) # encoding it in UTF-8
                 fileDiscription.close()
         
         # saves the target(s)
+        j : str
         for j in targetURL:
             saveTarget(j, "saved", "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "]) " + str(targetTitle)) # saving comic image
             if (fullArchive):
                 fileTransaction = open(transactionFileName, 'a')
                 fileTransaction.write(URLCurrent +","+ str(pageNumber) +","+ str(comicNumber) +","+ j +","+ j[j.rfind("/"):len(j)] + "," + "(" + comicName + " [" + str(comicNumber).zfill(numberWidth) + "]) " + str(targetTitle) + j[j.rfind('.'):len(j)] + "\n")
                 fileTransaction.close()
-            #error.log("Processing webpage (" + str(pageNumber).zfill(numberWidth) + "); Saving Image (" + str(comicNumber) + ") : " + str(j))
             logger.info(f"Processing webpage ({str(pageNumber).zfill(numberWidth)}); Saving Image ({str(comicNumber).zfill(numberWidth)}) : {j}")
             comicNumber = comicNumber + 1
 
@@ -771,7 +773,8 @@ if __name__ == '__main__':
         URLCurrent = URLNext
         URLNext = None
         targetTitle = ""
-        targetURL = None       
+        targetURL = None
+
         time.sleep(loopDelay)
 
     logger.warning("End Condition: PagesToScan reached, program terminating")
